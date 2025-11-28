@@ -3,12 +3,14 @@ from contextlib import asynccontextmanager
 from database import init_db
 from scheduler_service import start_scheduler, scheduler
 from routers import auth, posts
+from migrations import run_migrations
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     print("Démarrage de l'application...")
     init_db()
+    run_migrations() # Exécuter les migrations
     start_scheduler()
     yield
     # Shutdown
