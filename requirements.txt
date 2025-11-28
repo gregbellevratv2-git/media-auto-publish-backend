@@ -5,7 +5,12 @@ psycopg2-binary
 cloudinary
 python-jose[cryptography]
 passlib[bcrypt]
+bcrypt==4.0.1
 python-dotenv
+apscheduler
+python-multipart
+requests
+Pillow
 apscheduler
 python-multipart
 requests
