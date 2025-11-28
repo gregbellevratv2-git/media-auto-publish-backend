@@ -1,0 +1,1550 @@
+### FICHIER: CLAUDE.md ###
+
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+LinkedIn Auto Publish is a desktop GUI application for scheduling and publishing LinkedIn posts. It uses a webhook-based approach (via Make.com) to publish content, supports image uploads via FTP, and provides a calendar/list view for managing scheduled posts.
+
+## Architecture
+
+### Core Components
+
+- **main_app.pyw**: Main application with CustomTkinter GUI. Entry point that initializes the database and scheduler, then launches the app window. The app can minimize to system tray.
+  - `App`: Main window class (inherits from `ctk.CTk` and `TkinterDnD.DnDWrapper`)
+  - `ImageEntry`: Widget for managing individual images with move/delete controls
+
+- **database.py**: SQLite database layer managing posts
+  - Table: `posts` with columns: id, title, text_content, image_path, scheduled_at, status, created_at, error_message
+  - Status values: 'scheduled', 'published', 'failed'
+
+- **scheduler_service.py**: APScheduler-based background job management
+  - Uses SQLAlchemyJobStore backed by the same SQLite database
+  - Job IDs follow pattern: `post_{post_id}`
+  - `publish_post_task()` is the callback executed at scheduled time
+
+- **linkedin_api.py**: Webhook client for posting to LinkedIn via Make.com
+  - `WebhookLinkedInAPI.post_update()` sends JSON payload: {title, text, image_url}
+  - Combines title and text into a single field for the webhook
+
+- **image_utils.py**: Image processing and FTP upload
+  - Combines up to 3 images vertically with spacing
+  - Resizes combined image to height of 1980px (maintains aspect ratio)
+  - Uploads to FTP server and returns public URL
+
+- **config.py**: Configuration loader reading from config.ini
+  - Sections: [LINKEDIN] (WEBHOOK_URL), [FTP] (HOST, USER, PASS, PATH, BASE_URL)
+
+### Data Flow
+
+1. **Creating a Post**: User enters content, drops images → Images combined/resized → Upload to FTP → Store post in DB with image URL → Schedule job in APScheduler
+2. **Editing a Post**: Load post data into form → User modifies → Update DB and reschedule job (or create if doesn't exist)
+3. **Publishing**: APScheduler triggers `publish_post_task()` → Call webhook API → Update post status in DB
+4. **Manual Send**: User clicks "Envoyer" → Immediately call webhook API → Update status → Remove scheduled job if exists
+
+### UI Structure
+
+- Left panel: Post creation/editing form with drag-and-drop image zone (up to 3 images)
+- Right panel: Tabbed view
+  - **Liste tab**: Scrollable list of all posts with status indicators, delete/edit/send buttons
+  - **Calendrier tab**: Calendar view with event markers + details textbox showing posts for selected date
+
+## Common Development Tasks
+
+### Running the Application
+
+```bash
+# Activate virtual environment (Windows)
+venv\Scripts\activate
+
+# Run the application
+python main_app.pyw
+# or launch via
+launch.bat
+```
+
+### Installing Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+Note: The application requires `tkinterdnd2` which may need manual installation on some systems.
+
+### Database Operations
+
+The database is automatically initialized on first run. File: `linkedin_scheduler.db`
+
+To inspect the database:
+```bash
+python debug_db.py
+```
+
+### Configuration
+
+Edit `config.ini` to set:
+- Make.com webhook URL for LinkedIn posting
+- FTP credentials for image hosting
+- Image base URL for public access
+
+**IMPORTANT**: The config.ini file contains credentials. Ensure it is never committed to version control.
+
+## Key Implementation Details
+
+### Image Handling
+
+- Drag-and-drop zone accepts .png, .jpg, .jpeg, .webp files
+- Images are stored in-memory during editing (via `ImageEntry` widgets)
+- On schedule/save: Images are combined vertically with 50px spacing between them
+- Final image is resized to 1980px height and uploaded to FTP
+- Image URL is stored in database, not the local file path
+
+### Edit Mode
+
+- When editing, `App.editing_post_id` is set to the post ID
+- Cancel button becomes visible
+- Schedule button text changes to "Enregistrer" and command switches to `save_edited_post()`
+- `image_marked_for_deletion` flag tracks whether user clicked "Vider Images"
+- Image handling logic:
+  - New images dropped → Process and upload
+  - "Vider Images" clicked → Set flag, remove on save
+  - Neither → Keep existing image URL
+
+### Scheduler Persistence
+
+APScheduler uses SQLAlchemyJobStore, so scheduled jobs persist across application restarts automatically. Jobs are stored in the same SQLite database as posts.
+
+### System Tray Behavior
+
+- Closing window minimizes to tray (doesn't exit)
+- Tray icon menu: "Afficher" (restore), "Quitter" (exit)
+- Scheduler continues running when minimized
+
+## Debugging
+
+Logs are written to `app.log` with level DEBUG. Check this file for detailed execution traces.
+
+
+### FIN FICHIER: CLAUDE.md ###
+
+--------------------------------------------------------------------------------
+
+### FICHIER: config.py ###
+
+# config.py
+
+import configparser
+from typing import Dict
+
+# --- Initialisation du parser ---
+config = configparser.ConfigParser()
+config.read('config.ini')
+
+# --- Vérification de la lecture du fichier ---
+if not config.sections():
+    raise FileNotFoundError("Le fichier config.ini est introuvable ou vide. Veuillez le créer et le configurer.")
+
+# --- Configuration FTP (commune) ---
+try:
+    FTP_HOST = config.get('FTP', 'HOST')
+    FTP_USER = config.get('FTP', 'USER')
+    FTP_PASS = config.get('FTP', 'PASS')
+except (configparser.NoSectionError, configparser.NoOptionError) as e:
+    raise ValueError(f"Erreur dans la section [FTP] de config.ini : {e}")
+
+# --- Fonction pour récupérer la configuration d'une plateforme ---
+def get_platform_config(platform: str) -> Dict[str, str]:
+    """
+    Récupère la configuration spécifique pour une plateforme (LinkedIn, Instagram, etc.).
+    """
+    section_name = platform.upper()
+    if not config.has_section(section_name):
+        raise ValueError(f"La section [{section_name}] est manquante dans config.ini.")
+    
+    try:
+        platform_config = {
+            'webhook_url': config.get(section_name, 'WEBHOOK_URL'),
+            'ftp_path': config.get(section_name, 'FTP_PATH'),
+            'base_url': config.get(section_name, 'BASE_URL')
+        }
+        return platform_config
+    except configparser.NoOptionError as e:
+        raise ValueError(f"Erreur dans la section [{section_name}] de config.ini : {e}")
+
+# --- Validation simple des valeurs ---
+# On vérifie juste une des plateformes pour voir si le fichier est configuré
+try:
+    linkedin_config = get_platform_config('linkedin')
+    if 'votre_' in linkedin_config['webhook_url'] or 'votre_' in FTP_HOST:
+        print("ATTENTION : Le fichier config.ini contient encore des valeurs par défaut. Veuillez le mettre à jour.")
+except ValueError:
+    # Gère le cas où même la section LINKEDIN n'est pas correctement configurée
+    print("ATTENTION : La configuration pour LinkedIn semble incomplète ou manquante dans config.ini.")
+
+
+### FIN FICHIER: config.py ###
+
+--------------------------------------------------------------------------------
+
+### FICHIER: database.py ###
+
+# database.py
+
+# --- Imports ---
+import sqlite3
+from datetime import datetime
+from typing import List, Tuple, Optional
+
+# --- Constantes ---
+DB_NAME = "linkedin_scheduler.db"
+
+# --- Fonctions ---
+def get_db_connection():
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def initialize_db():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # --- Création de la table ---
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS posts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            platform TEXT NOT NULL DEFAULT 'linkedin',
+            title TEXT,
+            text_content TEXT NOT NULL,
+            image_path TEXT,
+            scheduled_at DATETIME NOT NULL,
+            status TEXT NOT NULL DEFAULT 'scheduled',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            error_message TEXT
+        )
+    """)
+
+    # --- Migration : Ajout de la colonne 'platform' si elle n'existe pas ---
+    cursor.execute("PRAGMA table_info(posts)")
+    columns = [column['name'] for column in cursor.fetchall()]
+    if 'platform' not in columns:
+        print("Mise à jour de la base de données : Ajout de la colonne 'platform'...")
+        # Ajoute la colonne avec une valeur par défaut pour les anciens enregistrements
+        cursor.execute("ALTER TABLE posts ADD COLUMN platform TEXT NOT NULL DEFAULT 'linkedin'")
+        print("Colonne 'platform' ajoutée avec succès.")
+
+    # --- Migration : Ajout de la colonne 'title' si elle n'existe pas (ancienne migration) ---
+    if 'title' not in columns:
+        cursor.execute("ALTER TABLE posts ADD COLUMN title TEXT")
+
+
+    conn.commit()
+    conn.close()
+
+def add_post(platform: str, title: Optional[str], text: str, image_path: Optional[str], scheduled_at: datetime) -> int:
+    """Ajoute une nouvelle publication à la base de données pour une plateforme spécifique."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO posts (platform, title, text_content, image_path, scheduled_at) VALUES (?, ?, ?, ?, ?)",
+        (platform, title, text, image_path, scheduled_at)
+    )
+    post_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return post_id
+
+def get_all_posts() -> List[sqlite3.Row]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM posts ORDER BY scheduled_at DESC")
+    posts = cursor.fetchall()
+    conn.close()
+    return posts
+
+def get_post_by_id(post_id: int) -> Optional[sqlite3.Row]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
+    post = cursor.fetchone()
+    conn.close()
+    return post
+
+def update_post_status(post_id: int, status: str, error_message: Optional[str] = None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE posts SET status = ?, error_message = ? WHERE id = ?",
+        (status, error_message, post_id)
+    )
+    conn.commit()
+    conn.close()
+
+def delete_post(post_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM posts WHERE id = ?", (post_id,))
+    conn.commit()
+    conn.close()
+
+def update_post_schedule(post_id: int, new_scheduled_at: datetime):
+    """Met à jour uniquement la date et l'heure de programmation d'un post."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE posts SET scheduled_at = ? WHERE id = ?",
+        (new_scheduled_at, post_id)
+    )
+    conn.commit()
+    conn.close()
+
+def update_post(post_id: int, platform: str, title: Optional[str], text: str, image_path: Optional[str], scheduled_at: datetime):
+    """Met à jour tous les champs modifiables d'une publication."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """UPDATE posts 
+           SET platform = ?, title = ?, text_content = ?, image_path = ?, scheduled_at = ?
+           WHERE id = ?""",
+        (platform, title, text, image_path, scheduled_at, post_id)
+    )
+    conn.commit()
+    conn.close()
+
+
+### FIN FICHIER: database.py ###
+
+--------------------------------------------------------------------------------
+
+### FICHIER: debug_db.py ###
+
+# debug_db.py
+import sqlite3
+import pprint
+
+DB_NAME = "linkedin_scheduler.db"
+
+def inspect_database():
+    """Reads and prints all posts from the database."""
+    print(f"--- Inspecting database: {DB_NAME} ---")
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT * FROM posts ORDER BY scheduled_at DESC")
+        posts = cursor.fetchall()
+        conn.close()
+        
+        if not posts:
+            print("The database contains no posts.")
+            return
+
+        print(f"Found {len(posts)} post(s):")
+        for post in posts:
+            pprint.pprint(dict(post))
+            print("-" * 20)
+            
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+if __name__ == "__main__":
+    inspect_database()
+
+
+### FIN FICHIER: debug_db.py ###
+
+--------------------------------------------------------------------------------
+
+### FICHIER: debug_edit_post.py ###
+
+#!/usr/bin/env python3
+# debug_edit_post.py
+
+import database
+import logging
+
+logging.basicConfig(level=logging.DEBUG, 
+                    filename='debug_edit.log', 
+                    filemode='w',
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+def debug_post_edit():
+    print("=== DÉBOGAGE MODIFICATION POST ===")
+    
+    # Récupérer tous les posts
+    posts = database.get_all_posts()
+    print(f"Nombre de posts trouvés : {len(posts)}")
+    
+    if not posts:
+        print("Aucun post dans la base de données !")
+        return
+    
+    # Prendre le premier post
+    post = posts[0]
+    post_id = post['id']
+    
+    print(f"\nTest avec le post ID : {post_id}")
+    print(f"Données du post :")
+    for key in post.keys():
+        print(f"  {key}: {post[key]}")
+    
+    # Simuler le chargement dans la fenêtre d'édition
+    print("\n=== SIMULATION CHARGEMENT ===")
+    
+    # Vérifier que le post existe
+    post_by_id = database.get_post_by_id(post_id)
+    if post_by_id:
+        print(f"[OK] Post récupéré par ID : {post_by_id['id']}")
+        print(f"  Platform: {post_by_id['platform']}")
+        print(f"  Title: {post_by_id['title']}")
+        print(f"  Text: {post_by_id['text_content'][:50]}...")
+        print(f"  Image: {post_by_id['image_path']}")
+        print(f"  Scheduled: {post_by_id['scheduled_at']}")
+    else:
+        print("[ERREUR] Post non trouvé par ID !")
+        return
+    
+    print("\n=== VÉRIFICATION BASE DE DONNÉES ===")
+    conn = database.get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
+    raw_post = cursor.fetchone()
+    conn.close()
+    
+    if raw_post:
+        print("Structure de la base de données :")
+        for idx, col in enumerate(raw_post.keys()):
+            print(f"  {col}: {raw_post[idx]}")
+    else:
+        print("[ERREUR] Post non trouvé dans la base !")
+    
+    print("\n=== FIN DU DÉBOGAGE ===")
+
+if __name__ == "__main__":
+    debug_post_edit()
+
+### FIN FICHIER: debug_edit_post.py ###
+
+--------------------------------------------------------------------------------
+
+### FICHIER: facebook_api.py ###
+
+# facebook_api.py
+from generic_api import WebhookAPI
+
+# Crée une instance de l'API pour Facebook
+api = WebhookAPI(platform='facebook')
+
+def post_update(title, text, image_path_or_url):
+    return api.post_update(title, text, image_path_or_url)
+
+
+### FIN FICHIER: facebook_api.py ###
+
+--------------------------------------------------------------------------------
+
+### FICHIER: generic_api.py ###
+
+# generic_api.py
+
+import requests
+from typing import Optional
+import config
+
+class WebhookAPI:
+    def __init__(self, platform: str):
+        self.platform = platform
+        platform_config = config.get_platform_config(self.platform)
+        self.webhook_url = platform_config['webhook_url']
+        
+        print(f"Initialisation du client API pour {self.platform.capitalize()} (via Webhook)...")
+        if "votre_" in self.webhook_url:
+            print(f"ATTENTION : L'URL du webhook pour {self.platform.capitalize()} dans config.ini n'a pas été configurée !")
+
+    def post_update(self, title: Optional[str], text: str, image_path_or_url: Optional[str] = None) -> tuple[bool, str]:
+        print("-" * 20)
+        print(f"Préparation de l'envoi au webhook pour publication sur {self.platform.capitalize()}...")
+        
+        image_url = None
+        if image_path_or_url:
+            if image_path_or_url.startswith(('http://', 'https://')):
+                image_url = image_path_or_url
+                print(f"URL d'image valide détectée : {image_url}")
+            else:
+                print(f"Avertissement : Le chemin de fichier local '{image_path_or_url}' ne peut pas être envoyé.")
+
+        full_text = text
+        if title:
+            full_text = f"{title}\n\n{text}"
+
+        payload = {
+            "title": title,
+            "text": full_text,
+            "image_url": image_url 
+        }
+
+        try:
+            response = requests.post(self.webhook_url, json=payload, timeout=15)
+            if response.status_code == 200 and "Accepted" in response.text:
+                message = f"Webhook pour {self.platform.capitalize()} reçu avec succès par Make.com."
+                print(f">>> SUCCÈS : {message}")
+                return True, message
+            else:
+                message = f"Erreur du webhook pour {self.platform.capitalize()} : Status {response.status_code} - {response.text}"
+                print(f">>> ÉCHEC : {message}")
+                return False, message
+        except requests.exceptions.RequestException as e:
+            message = f"Erreur de connexion au webhook pour {self.platform.capitalize()} : {e}"
+            print(f">>> ÉCHEC CRITIQUE : {message}")
+            return False, message
+
+
+### FIN FICHIER: generic_api.py ###
+
+--------------------------------------------------------------------------------
+
+### FICHIER: image_utils.py ###
+
+# image_utils.py
+
+import ftplib
+from PIL import Image
+from datetime import datetime
+import os
+import io
+import config
+
+# --- Constantes ---
+FINAL_IMAGE_HEIGHT = 1980
+SPACE_BETWEEN_IMAGES = 50  # Espace en pixels entre les images
+
+# --- Fonctions de traitement d'image ---
+
+def combine_and_resize_images(image_paths: list[str], platform: str) -> io.BytesIO | None:
+    """
+    Combine jusqu'à 3 images verticalement, les redimensionne et retourne un objet BytesIO.
+    Prend en compte les contraintes spécifiques à la plateforme.
+    """
+    if not image_paths:
+        return None
+
+    images = [Image.open(path) for path in image_paths]
+    
+    # --- Redimensionnement proportionnel initial ---
+    base_width = images[0].width
+    resized_images = [images[0]]
+    for img in images[1:]:
+        if img.width != base_width:
+            aspect_ratio = img.height / img.width
+            new_height = int(aspect_ratio * base_width)
+            resized_images.append(img.resize((base_width, new_height), Image.LANCZOS))
+        else:
+            resized_images.append(img)
+
+    # --- Création de l'image combinée ---
+    total_height = sum(img.height for img in resized_images) + SPACE_BETWEEN_IMAGES * (len(resized_images) - 1)
+    combined_image = Image.new('RGB', (base_width, total_height), 'white')
+
+    current_y = 0
+    for img in resized_images:
+        combined_image.paste(img, (0, current_y))
+        current_y += img.height + SPACE_BETWEEN_IMAGES
+
+    # --- Redimensionnement final à la hauteur désirée ---
+    final_aspect_ratio = combined_image.width / combined_image.height
+    final_width = int(FINAL_IMAGE_HEIGHT * final_aspect_ratio)
+    final_image = combined_image.resize((final_width, FINAL_IMAGE_HEIGHT), Image.LANCZOS)
+
+    # --- Redimensionnement spécifique à Instagram ---
+    if platform == 'instagram' and final_image.width > 1400:
+        print(f"Image pour Instagram trop large ({final_image.width}px). Redimensionnement à 1400px de large.")
+        insta_aspect_ratio = final_image.height / final_image.width
+        new_height = int(1400 * insta_aspect_ratio)
+        final_image = final_image.resize((1400, new_height), Image.LANCZOS)
+
+    # --- Sauvegarde en mémoire ---
+    output = io.BytesIO()
+    final_image.save(output, format='JPEG', quality=90)
+    output.seek(0)
+    return output
+
+# --- Fonctions FTP ---
+
+def upload_image_to_ftp(image_data: io.BytesIO, scheduled_at: datetime, platform: str) -> str | None:
+    """
+    Télécharge une image sur le serveur FTP pour une plateforme spécifique et retourne l'URL publique.
+    """
+    # --- Récupération de la configuration pour la plateforme ---
+    try:
+        platform_config = config.get_platform_config(platform)
+        ftp_path = platform_config['ftp_path']
+        base_url = platform_config['base_url']
+    except ValueError as e:
+        print(f"Erreur de configuration pour la plateforme '{platform}': {e}")
+        return None
+
+    filename = scheduled_at.strftime("%Y-%m-%d-%H-%M") + ".jpg"
+    # Les chemins FTP utilisent des slashes, même sur Windows
+    remote_path = f"{ftp_path.rstrip('/')}/{filename}"
+
+    try:
+        with ftplib.FTP(config.FTP_HOST, config.FTP_USER, config.FTP_PASS) as ftp:
+            ftp.cwd(ftp_path) # Le CWD doit être le chemin du dossier de la plateforme
+            ftp.storbinary(f"STOR {filename}", image_data)
+            
+            # S'assurer que la base_url se termine par un slash
+            image_url = f"{base_url.rstrip('/')}/{filename}"
+            print(f"Image téléchargée avec succès pour {platform}: {image_url}")
+            return image_url
+    except ftplib.all_errors as e:
+        print(f"Erreur FTP : {e}")
+        return None
+
+
+### FIN FICHIER: image_utils.py ###
+
+--------------------------------------------------------------------------------
+
+### FICHIER: instagram_api.py ###
+
+# instagram_api.py
+from generic_api import WebhookAPI
+
+# Crée une instance de l'API pour Instagram
+api = WebhookAPI(platform='instagram')
+
+def post_update(title, text, image_path_or_url):
+    return api.post_update(title, text, image_path_or_url)
+
+
+### FIN FICHIER: instagram_api.py ###
+
+--------------------------------------------------------------------------------
+
+### FICHIER: launch.bat ###
+
+@echo off
+REM Change directory to the script's location
+cd /d %~dp0
+
+title LinkedIn Auto Publisher
+
+echo Activation de l'environnement virtuel...
+call .\venv\Scripts\activate.bat
+
+echo Lancement de l'application...
+start "LinkedIn Auto Publisher" "%~dp0\venv\Scripts\pythonw.exe" main_app.pyw
+
+
+### FIN FICHIER: launch.bat ###
+
+--------------------------------------------------------------------------------
+
+### FICHIER: linkedin_api.py ###
+
+# linkedin_api.py
+from generic_api import WebhookAPI
+
+# Crée une instance de l'API pour LinkedIn
+api = WebhookAPI(platform='linkedin')
+
+def post_update(title, text, image_path_or_url):
+    return api.post_update(title, text, image_path_or_url)
+
+
+### FIN FICHIER: linkedin_api.py ###
+
+--------------------------------------------------------------------------------
+
+### FICHIER: main_app.pyw ###
+
+# main_app.pyw
+
+# --- Imports ---
+import logging
+import customtkinter as ctk
+from tkinter import filedialog, messagebox
+from tkcalendar import DateEntry, Calendar
+from datetime import datetime
+import database
+import scheduler_service
+import threading
+from PIL import Image, ImageTk
+import pystray
+import image_utils
+from tkinterdnd2 import DND_FILES, TkinterDnD
+from collections import defaultdict
+import re
+
+# --- Logging Configuration ---
+logging.basicConfig(level=logging.DEBUG, 
+                    filename='app.log', 
+                    filemode='a',
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+# --- Constantes ---
+PLATFORMS = ["linkedin", "instagram", "facebook"]
+PLATFORM_ICONS = {
+    "linkedin": "in",
+    "instagram": "ig",
+    "facebook": "fb"
+}
+# --- NOUVEAU: Définition des couleurs par plateforme ---
+PLATFORM_COLORS = {
+    "linkedin": {"button": "#0A66C2", "hover": "#004182", "border": "#0A66C2"},
+    "instagram": {"button": "#E1306C", "hover": "#C13584", "border": "#E1306C"},
+    "facebook": {"button": "#1877F2", "hover": "#166FE5", "border": "#1877F2"}
+}
+
+# La classe PostCreatorFrame a été supprimée et sera remplacée par une fenêtre modale.
+
+# --- Classe Principale de l'Application ---
+class App(ctk.CTk, TkinterDnD.DnDWrapper):
+    def __init__(self):
+        super().__init__()
+        self.TkdndVersion = TkinterDnD._require(self)
+
+        # --- Thème et apparence ---
+        ctk.set_appearance_mode("Dark")
+        self.title("Social Post Scheduler Pro")
+        self.geometry("1280x800")
+
+        self.colors = {
+            "background": "#1A1A1A",
+            "sidebar": "#232323",
+            "content": "#1E1E1E",
+            "card": "#2B2B2B",
+            "primary": "#007AFF",
+            "text_primary": "#F0F0F0",
+            "text_secondary": "#A0A0A0",
+        }
+        self.configure(fg_color=self.colors["background"])
+
+        # --- Configuration de la grille principale ---
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+
+        # --- Barre de navigation latérale ---
+        self.sidebar_frame = ctk.CTkFrame(self, width=80, corner_radius=0, fg_color=self.colors["sidebar"])
+        self.sidebar_frame.grid(row=0, column=0, rowspan=2, sticky="nsw")
+        self.sidebar_frame.grid_rowconfigure(4, weight=1)
+
+        self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="SP", font=ctk.CTkFont(size=36, weight="bold"), text_color=self.colors["primary"])
+        self.logo_label.grid(row=0, column=0, padx=10, pady=30)
+
+        self.sidebar_buttons = {}
+        self.add_sidebar_button("calendar", "🗓️", 1)
+        self.add_sidebar_button("posts", "📄", 2)
+        
+        self.new_post_button = ctk.CTkButton(self.sidebar_frame, text="+ ", width=50, height=50, corner_radius=25, font=ctk.CTkFont(size=30), command=self.open_post_creator)
+        self.new_post_button.grid(row=3, column=0, padx=10, pady=20)
+
+        self.add_sidebar_button("settings", "⚙️", 5, sticky="s")
+
+        # --- Zone de contenu principale ---
+        self.main_view = ctk.CTkFrame(self, fg_color="transparent")
+        self.main_view.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
+        self.main_view.grid_columnconfigure(0, weight=1)
+        self.main_view.grid_rowconfigure(0, weight=1)
+
+        self.views = {}
+        for view_name in ("calendar", "posts", "settings"):
+            frame = ctk.CTkFrame(self.main_view, fg_color="transparent")
+            self.views[view_name] = frame
+            frame.grid(row=0, column=0, sticky="nsew")
+            frame.grid_remove() # Cacher toutes les vues au début
+
+        # --- Construction des vues ---
+        self.posts_by_date = defaultdict(list)
+        self.build_calendar_view()
+        self.build_posts_view()
+        self.build_settings_view()
+
+        # --- Barre de Statut ---
+        self.status_bar = ctk.CTkLabel(self, text="Prêt", font=ctk.CTkFont(size=12), text_color=self.colors["text_secondary"], anchor="w")
+        self.status_bar.grid(row=1, column=1, padx=20, pady=(0, 10), sticky="ew")
+
+        # --- Initialisation ---
+        self.protocol("WM_DELETE_WINDOW", self.hide_window)
+        self.icon_thread = None
+        self.icon = self.create_tray_icon()
+        self.show_view("calendar")
+        self.refresh_all_views()
+
+    def add_sidebar_button(self, name, text, row, sticky="n"):
+        button = ctk.CTkButton(self.sidebar_frame, text=text, width=50, height=50, corner_radius=10, 
+                               fg_color="transparent", text_color=self.colors["text_secondary"], 
+                               hover_color=self.colors["card"], font=ctk.CTkFont(size=28),
+                               command=lambda: self.show_view(name))
+        button.grid(row=row, column=0, padx=10, pady=10, sticky=sticky)
+        self.sidebar_buttons[name] = button
+
+    def show_view(self, view_name):
+        for name, button in self.sidebar_buttons.items():
+            button.configure(text_color=self.colors["primary"] if name == view_name else self.colors["text_secondary"])
+        
+        for name, frame in self.views.items():
+            if name == view_name:
+                frame.grid()
+            else:
+                frame.grid_remove()
+
+    def build_calendar_view(self):
+        view = self.views["calendar"]
+        view.grid_columnconfigure(0, weight=1)
+        view.grid_rowconfigure(1, weight=1) # Calendar expands
+
+        header_frame = ctk.CTkFrame(view, fg_color="transparent")
+        header_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
+        ctk.CTkLabel(header_frame, text="Calendrier", font=ctk.CTkFont(size=28, weight="bold"), text_color=self.colors["text_primary"]).pack(side="left")
+
+        calendar_container = ctk.CTkFrame(view, fg_color=self.colors["content"], corner_radius=10)
+        calendar_container.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
+        calendar_container.grid_columnconfigure(0, weight=1)
+        calendar_container.grid_rowconfigure(0, weight=1)
+
+        self.main_calendar = Calendar(calendar_container, selectmode='day', locale='fr_FR',
+                                      background=self.colors["content"], bordercolor=self.colors["content"],
+                                      headersbackground=self.colors["content"], normalbackground=self.colors["card"],
+                                      foreground=self.colors["text_primary"], normalforeground=self.colors["text_primary"],
+                                      headersforeground=self.colors["primary"], weekendbackground=self.colors["card"],
+                                      othermonthforeground=self.colors["text_secondary"], othermonthbackground=self.colors["card"],
+                                      othermonthweforeground=self.colors["text_secondary"], othermonthwebackground=self.colors["card"])
+        self.main_calendar.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        self.main_calendar.bind("<<CalendarSelected>>", self.show_posts_for_date)
+
+        legend_frame = ctk.CTkFrame(calendar_container, fg_color="transparent")
+        legend_frame.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+        
+        self.calendar_details_textbox = ctk.CTkTextbox(view, height=180, state="disabled", wrap="word", fg_color=self.colors["content"], corner_radius=10, border_width=0)
+        self.calendar_details_textbox.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
+
+        if not hasattr(self, 'CALENDAR_COLORS'): self.refresh_calendar_view()
+
+        sorted_legend = sorted(self.CALENDAR_COLORS.items(), key=lambda item: len(item[0]))
+        for _, (color, name) in sorted_legend:
+            item_frame = ctk.CTkFrame(legend_frame, fg_color="transparent")
+            ctk.CTkLabel(item_frame, text="", fg_color=color, width=15, height=15, corner_radius=4).pack(side="left", padx=5)
+            ctk.CTkLabel(item_frame, text=name, font=ctk.CTkFont(size=12), text_color=self.colors["text_secondary"]).pack(side="left", padx=(0, 15))
+            item_frame.pack(side="left")
+
+    def build_posts_view(self):
+        view = self.views["posts"]
+        view.grid_columnconfigure(0, weight=1)
+        view.grid_rowconfigure(1, weight=1)
+        
+        header_frame = ctk.CTkFrame(view, fg_color="transparent")
+        header_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
+        ctk.CTkLabel(header_frame, text="Publications", font=ctk.CTkFont(size=28, weight="bold"), text_color=self.colors["text_primary"]).pack(side="left")
+        
+        self.platform_filter_var = ctk.StringVar(value="Toutes")
+        ctk.CTkOptionMenu(header_frame, values=["Toutes", "linkedin", "instagram", "facebook"], variable=self.platform_filter_var, command=lambda _: self.refresh_posts_list()).pack(side="right")
+
+        self.scrollable_frame = ctk.CTkScrollableFrame(view, fg_color="transparent")
+        self.scrollable_frame.grid(row=1, column=0, sticky="nsew", padx=0, pady=10)
+        self.scrollable_frame.grid_columnconfigure(0, weight=1)
+
+    def build_settings_view(self):
+        view = self.views["settings"]
+        header_frame = ctk.CTkFrame(view, fg_color="transparent")
+        header_frame.pack(fill="x", padx=20, pady=10)
+        ctk.CTkLabel(header_frame, text="Paramètres", font=ctk.CTkFont(size=28, weight="bold"), text_color=self.colors["text_primary"]).pack(side="left")
+        
+        content_frame = ctk.CTkFrame(view, fg_color=self.colors["content"], corner_radius=10)
+        content_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        ctk.CTkLabel(content_frame, text="Cette section est en cours de construction.", font=ctk.CTkFont(size=16), text_color=self.colors["text_secondary"]).pack(pady=50)
+
+    def open_post_creator(self, post_id=None, date=None):
+        logging.debug(f"open_post_creator called with post_id={post_id}, date={date}")
+        if hasattr(self, 'creator_window') and self.creator_window.winfo_exists():
+            logging.debug("Creator window already exists, focusing")
+            self.creator_window.focus()
+            return
+        logging.debug("Creating new PostCreatorWindow")
+        self.creator_window = PostCreatorWindow(self, post_id=post_id, preselected_date=date)
+        self.creator_window.grab_set()
+        logging.debug("PostCreatorWindow created and grab_set called")
+
+    def create_tray_icon(self):
+        image = Image.new('RGB', (64, 64), self.colors["primary"])
+        menu = (pystray.MenuItem('Afficher', self.show_window, default=True), pystray.MenuItem('Quitter', self.quit_window))
+        return pystray.Icon("Social Post Scheduler", image, "Social Post Scheduler", menu)
+
+    def run_icon(self): self.icon.run()
+    def hide_window(self):
+        self.withdraw()
+        if self.icon_thread is None or not self.icon_thread.is_alive():
+            self.icon_thread = threading.Thread(target=self.run_icon, daemon=True)
+            self.icon_thread.start()
+    def show_window(self, icon=None, item=None):
+        if icon: icon.stop()
+        self.deiconify(); self.lift(); self.focus_force()
+    def quit_window(self, icon=None, item=None):
+        if icon: icon.stop()
+        scheduler_service.scheduler.shutdown()
+        self.destroy()
+
+    def refresh_posts_list(self):
+        for widget in self.scrollable_frame.winfo_children():
+            widget.destroy()
+        
+        platform_filter = self.platform_filter_var.get()
+        all_posts = database.get_all_posts()
+        
+        filtered_posts = all_posts
+        if platform_filter != "Toutes":
+            filtered_posts = [p for p in all_posts if p['platform'] == platform_filter]
+
+        if not filtered_posts:
+            ctk.CTkLabel(self.scrollable_frame, text=f"Aucune publication trouvée.", text_color=self.colors["text_secondary"], font=ctk.CTkFont(size=14)).pack(pady=20)
+            return
+
+        for post in filtered_posts:
+            card = PostCard(self.scrollable_frame, post, self)
+            card.pack(fill="x", padx=5, pady=5)
+
+    def delete_post(self, post_id):
+        if messagebox.askyesno("🗑️ Confirmation", "Voulez-vous vraiment supprimer cette publication ?"):
+            scheduler_service.remove_scheduled_post(post_id)
+            database.delete_post(post_id)
+            self.refresh_all_views()
+            self.status_bar.configure(text="✓ Publication supprimée.")
+            self.after(3000, lambda: self.status_bar.configure(text="Prêt"))
+
+    def send_post_now(self, post_id):
+        post = database.get_post_by_id(post_id)
+        if not post:
+            messagebox.showerror("❌ Erreur", "Post non trouvé.")
+            return
+        
+        if not messagebox.askyesno("📤 Confirmation", f"Envoyer cette publication sur {post['platform'].capitalize()} maintenant ?"):
+            return
+
+        self.status_bar.configure(text=f"📤 Envoi en cours sur {post['platform'].capitalize()}...")
+        
+        result = []
+        thread = threading.Thread(target=self._send_post_now_worker, args=(post_id, result))
+        thread.start()
+
+        self.after(100, self._check_send_thread, thread, result)
+
+    def _send_post_now_worker(self, post_id, result):
+        try:
+            success, message = scheduler_service.send_post_now_manual(post_id)
+            result.extend([success, message])
+        except Exception as e:
+            logging.error(f"Erreur dans le worker d'envoi manuel : {e}")
+            result.extend([False, str(e)])
+
+    def _check_send_thread(self, thread, result):
+        if thread.is_alive():
+            self.after(100, self._check_send_thread, thread, result)
+        else:
+            if result and result[0] is True:
+                self.status_bar.configure(text=f"✓ {result[1]}", text_color="#4CAF50")
+                self.after(5000, lambda: self.status_bar.configure(text="Prêt", text_color=self.colors["text_secondary"]))
+            else:
+                error_message = result[1] if len(result) > 1 else "Une erreur inconnue est survenue."
+                messagebox.showerror("❌ Erreur d'envoi", f"L'envoi a échoué :\n\n{error_message}")
+                self.status_bar.configure(text="❌ Échec de l'envoi.", text_color="#F44336")
+            self.refresh_all_views()
+
+    def enter_edit_mode(self, post_id):
+        logging.debug(f"enter_edit_mode called with post_id: {post_id}")
+        self.open_post_creator(post_id=post_id)
+
+    def refresh_all_views(self):
+        self.refresh_calendar_view()
+        self.refresh_posts_list()
+
+    def refresh_calendar_view(self):
+        for event in self.main_calendar.get_calevents(): self.main_calendar.calevent_remove(event)
+        self.posts_by_date.clear()
+
+        posts = database.get_all_posts()
+        for post in posts:
+            try:
+                scheduled_dt = datetime.strptime(post['scheduled_at'], '%Y-%m-%d %H:%M:%S')
+                self.posts_by_date[scheduled_dt.date()].append(post)
+            except (ValueError, TypeError): continue
+
+        if not hasattr(self, 'CALENDAR_COLORS'):
+            self.CALENDAR_COLORS = {
+                frozenset(["linkedin"]): ("#4CAF50", "LinkedIn"),
+                frozenset(["instagram"]): ("#F44336", "Instagram"),
+                frozenset(["facebook"]): ("#1877F2", "Facebook"),
+                frozenset(["facebook", "instagram"]): ("#9C27B0", "Facebook + Instagram"),
+                frozenset(["instagram", "linkedin"]): ("#795548", "Instagram + LinkedIn"),
+                frozenset(["facebook", "linkedin"]): ("#FF9800", "Facebook + LinkedIn"),
+                frozenset(["facebook", "linkedin", "instagram"]): ("#6A6A6A", "Les 3 plateformes"),
+            }
+
+        for date, posts_list in self.posts_by_date.items():
+            tag = f"posts_{date}"
+            platforms_on_day = frozenset(p['platform'] for p in posts_list)
+            color, _ = self.CALENDAR_COLORS.get(platforms_on_day, ("gray", ""))
+            event_text = f"{len(posts_list)}"
+            self.main_calendar.calevent_create(date, event_text, tag)
+            self.main_calendar.tag_config(tag, background=color, foreground='white')
+        
+        self.show_posts_for_date()
+
+    def show_posts_for_date(self, event=None):
+        try:
+            selected_date = self.main_calendar.selection_get()
+        except:
+            return
+
+        posts_on_date = self.posts_by_date.get(selected_date)
+        self.calendar_details_textbox.configure(state="normal")
+        self.calendar_details_textbox.delete("1.0", "end")
+
+        if posts_on_date:
+            full_text = f"--- {len(posts_on_date)} publication(s) le {selected_date.strftime('%d/%m/%Y')} ---\n\n"
+            for i, post in enumerate(posts_on_date):
+                platform_icon = PLATFORM_ICONS.get(post['platform'], '?')
+                title = f"Titre: {post['title']}\n" if post['title'] else ""
+                scheduled_time = datetime.strptime(post['scheduled_at'], '%Y-%m-%d %H:%M:%S').strftime('%H:%M')
+                full_text += f"#{i+1} [{platform_icon.upper()}] à {scheduled_time} (Status: {post['status']})\n{title}Contenu: {post['text_content']}\n{''.join(['-']*20)}\n"
+            self.calendar_details_textbox.insert("1.0", full_text)
+        else:
+            self.calendar_details_textbox.insert("1.0", f"Aucune publication pour le {selected_date.strftime('%d/%m/%Y')}.")
+        
+        self.calendar_details_textbox.configure(state="disabled")
+
+class PostCard(ctk.CTkFrame):
+    def __init__(self, master, post_data, app_instance):
+        super().__init__(master, fg_color=app_instance.colors["card"], corner_radius=10)
+        self.post = post_data
+        self.app = app_instance
+
+        self.grid_columnconfigure(1, weight=1)
+
+        status_colors = {"scheduled": "#4A90E2", "published": "#4CAF50", "failed": "#F44336"}
+        status_indicator = ctk.CTkFrame(self, width=5, fg_color=status_colors.get(self.post['status'], "gray"), corner_radius=0)
+        status_indicator.grid(row=0, column=0, rowspan=3, sticky="nsw")
+
+        content_frame = ctk.CTkFrame(self, fg_color="transparent")
+        content_frame.grid(row=0, column=1, rowspan=3, sticky="nsew", padx=15, pady=10)
+        content_frame.grid_columnconfigure(0, weight=1)
+
+        header_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        header_frame.grid(row=0, column=0, sticky="ew")
+        
+        platform_icon_colors = {"linkedin": "#0A66C2", "instagram": "#E1306C", "facebook": "#1877F2"}
+        platform_icon = ctk.CTkLabel(header_frame, text=PLATFORM_ICONS.get(self.post['platform'], "?").upper(), 
+                                     font=ctk.CTkFont(size=12, weight="bold"), 
+                                     fg_color=platform_icon_colors.get(self.post['platform'], "gray"),
+                                     width=28, height=28, corner_radius=5)
+        platform_icon.pack(side="left")
+
+        title_label = ctk.CTkLabel(header_frame, text=self.post['title'] or "Publication sans titre", 
+                                   font=ctk.CTkFont(size=18, weight="bold"), text_color=self.app.colors["text_primary"])
+        title_label.pack(side="left", padx=10)
+
+        details_text = f"Prévu pour le {self.post['scheduled_at']}  •  Statut : {self.post['status'].capitalize()}"
+        details_label = ctk.CTkLabel(content_frame, text=details_text, font=ctk.CTkFont(size=12), text_color=self.app.colors["text_secondary"])
+        details_label.grid(row=1, column=0, sticky="w", pady=(5, 10))
+
+        content_preview = ctk.CTkLabel(content_frame, text=self.post['text_content'], wraplength=750, justify="left", 
+                                       font=ctk.CTkFont(size=14), text_color=self.app.colors["text_secondary"])
+        content_preview.grid(row=2, column=0, sticky="w")
+
+        action_frame = ctk.CTkFrame(self, fg_color="transparent")
+        action_frame.grid(row=0, column=2, rowspan=3, padx=15)
+
+        if self.post['status'] == 'scheduled':
+            edit_button = ctk.CTkButton(action_frame, text="✏️", width=35, height=35, fg_color="transparent", hover_color=self.app.colors["background"],
+                                        command=lambda: self.app.enter_edit_mode(self.post['id']))
+            edit_button.pack(pady=5)
+            
+            send_button = ctk.CTkButton(action_frame, text="📤", width=35, height=35, fg_color="transparent", hover_color=self.app.colors["background"],
+                                        command=lambda: self.app.send_post_now(self.post['id']))
+            send_button.pack(pady=5)
+
+        delete_button = ctk.CTkButton(action_frame, text="🗑️", width=35, height=35, fg_color="transparent", hover_color=self.app.colors["background"],
+                                      text_color="#D32F2F",
+                                      command=lambda: self.app.delete_post(self.post['id']))
+        delete_button.pack(pady=5)
+
+class ImageEntry(ctk.CTkFrame):
+    def __init__(self, master, image_path, delete_callback, move_callback):
+        super().__init__(master, fg_color="#3A3A3A", border_width=0, corner_radius=8)
+        self.image_path = image_path
+        filename = image_path.split("/")[-1].split("\\")[-1]
+        self.label = ctk.CTkLabel(self, text=f"🖼️ {filename}", wraplength=200, justify="left", font=ctk.CTkFont(size=12))
+        self.label.pack(side="left", fill="x", expand=True, padx=10, pady=8)
+        self.up_button = ctk.CTkButton(self, text="▲", width=30, height=30, fg_color="#4A4A4A", hover_color="#5A5A5A", command=lambda: move_callback(self, -1))
+        self.up_button.pack(side="left", padx=(0, 3), pady=5)
+        self.down_button = ctk.CTkButton(self, text="▼", width=30, height=30, fg_color="#4A4A4A", hover_color="#5A5A5A", command=lambda: move_callback(self, 1))
+        self.down_button.pack(side="left", padx=(0, 3), pady=5)
+        self.delete_button = ctk.CTkButton(self, text="✕", width=30, height=30, fg_color="#D32F2F", hover_color="#B71C1C", command=lambda: delete_callback(self))
+        self.delete_button.pack(side="left", padx=(0, 8), pady=5)
+
+class PostCreatorWindow(ctk.CTkToplevel):
+    def __init__(self, master, post_id=None, preselected_date=None):
+        super().__init__(master)
+        self.app = master
+        self.post_id = post_id
+        self.image_widgets = []
+        self.image_marked_for_deletion = False
+
+        title = "Créer une publication" if not post_id else "Modifier la publication"
+        self.title(title)
+        self.geometry("850x800")
+        self.configure(fg_color=self.app.colors["content"])
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.transient(self.app)
+
+        ctk.CTkLabel(self, text=title, font=ctk.CTkFont(size=24, weight="bold")).grid(row=0, column=0, pady=20)
+
+        scrollable_main = ctk.CTkScrollableFrame(self, fg_color="transparent")
+        scrollable_main.grid(row=1, column=0, sticky="nsew", padx=20)
+        scrollable_main.grid_columnconfigure(0, weight=1)
+
+        # --- Plateformes ---
+        p_frame = ctk.CTkFrame(scrollable_main, fg_color=self.app.colors["card"])
+        p_frame.grid(row=0, column=0, sticky="ew", pady=10)
+        ctk.CTkLabel(p_frame, text="1. Plateformes", font=ctk.CTkFont(weight="bold")).pack(anchor="w", padx=15, pady=10)
+        self.platform_vars = {}
+        self.platform_checkboxes = {}
+        platform_options_frame = ctk.CTkFrame(p_frame, fg_color="transparent")
+        platform_options_frame.pack(fill="x", padx=15, pady=(0, 10))
+        for platform in PLATFORMS:
+            var = ctk.StringVar(value="off")
+            cb = ctk.CTkCheckBox(platform_options_frame, text=platform.capitalize(), variable=var, onvalue=platform, offvalue="off")
+            cb.pack(side="left", padx=10)
+            self.platform_vars[platform] = var
+            self.platform_checkboxes[platform] = cb
+
+        # --- Contenu ---
+        c_frame = ctk.CTkFrame(scrollable_main, fg_color=self.app.colors["card"])
+        c_frame.grid(row=1, column=0, sticky="ew", pady=10)
+        c_frame.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(c_frame, text="2. Contenu", font=ctk.CTkFont(weight="bold")).grid(row=0, column=0, sticky="w", padx=15, pady=10)
+        self.title_entry = ctk.CTkEntry(c_frame, placeholder_text="Titre (optionnel)")
+        self.title_entry.grid(row=1, column=0, sticky="ew", padx=15, pady=5)
+        self.textbox = ctk.CTkTextbox(c_frame, height=180)
+        self.textbox.grid(row=2, column=0, sticky="ew", padx=15, pady=(5, 15))
+
+        # --- Images ---
+        i_frame = ctk.CTkFrame(scrollable_main, fg_color=self.app.colors["card"])
+        i_frame.grid(row=2, column=0, sticky="ew", pady=10)
+        i_frame.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(i_frame, text="3. Images (jusqu'à 3)", font=ctk.CTkFont(weight="bold")).grid(row=0, column=0, sticky="w", padx=15, pady=10)
+        self.drop_zone = ctk.CTkFrame(i_frame, height=75, border_width=2, border_color="#444444", fg_color="transparent")
+        self.drop_zone.grid(row=1, column=0, sticky="ew", padx=15, pady=5)
+        self.drop_zone.drop_target_register(DND_FILES)
+        self.drop_zone.dnd_bind('<<Drop>>', self.handle_drop)
+        self.drop_label = ctk.CTkLabel(self.drop_zone, text="📎 Glissez-déposez vos images ici")
+        self.drop_label.place(relx=0.5, rely=0.5, anchor="center")
+        self.image_labels_frame = ctk.CTkFrame(i_frame, fg_color="transparent")
+        self.image_labels_frame.grid(row=2, column=0, sticky="ew", padx=15, pady=(5, 15))
+
+        # --- Programmation ---
+        s_frame = ctk.CTkFrame(scrollable_main, fg_color=self.app.colors["card"])
+        s_frame.grid(row=3, column=0, sticky="ew", pady=10)
+        ctk.CTkLabel(s_frame, text="4. Date et heure", font=ctk.CTkFont(weight="bold")).pack(anchor="w", padx=15, pady=10)
+        datetime_frame = ctk.CTkFrame(s_frame, fg_color="transparent")
+        datetime_frame.pack(pady=(0, 15))
+        self.cal = DateEntry(datetime_frame, width=12, background=self.app.colors["primary"], foreground='white', borderwidth=2, date_pattern='dd/mm/y')
+        self.cal.pack(side="left", padx=5)
+        self.hour_menu = ctk.CTkOptionMenu(datetime_frame, values=[f"{h:02d}" for h in range(24)], width=70)
+        self.hour_menu.pack(side="left", padx=5)
+        self.minute_menu = ctk.CTkOptionMenu(datetime_frame, values=[f"{m:02d}" for m in range(60)], width=70)
+        self.minute_menu.pack(side="left", padx=5)
+
+        # --- Boutons d'action ---
+        action_frame = ctk.CTkFrame(self, fg_color="transparent")
+        action_frame.grid(row=2, column=0, pady=20, sticky="e")
+        self.status_label = ctk.CTkLabel(action_frame, text="")
+        self.status_label.pack(side="left", padx=10)
+        ctk.CTkButton(action_frame, text="Annuler", fg_color=self.app.colors["text_secondary"], hover_color="#5A5A5A", command=self.destroy).pack(side="left", padx=10)
+        self.save_button = ctk.CTkButton(action_frame, text="Enregistrer", fg_color=self.app.colors["primary"], command=self.save)
+        self.save_button.pack(side="left", padx=10)
+
+        if self.post_id:
+            self.load_post_data()
+            self.update_idletasks()  # Forcer le rafraîchissement de l'interface
+        elif preselected_date:
+            self.cal.set_date(preselected_date)
+
+    def load_post_data(self):
+        logging.debug(f"load_post_data called for post_id: {self.post_id}")
+        post = database.get_post_by_id(self.post_id)
+        if not post: 
+            logging.error(f"Post {self.post_id} not found in database")
+            self.destroy(); 
+            return
+        
+        logging.debug(f"Post data loaded: id={post['id']}, platform={post['platform']}, title={post['title']}")
+        
+        # Charger et cocher la plateforme
+        if post['platform'] in self.platform_checkboxes:
+            cb = self.platform_checkboxes[post['platform']]
+            cb.select()
+            logging.debug(f"Platform checkbox {post['platform']} checked")
+        
+        # Désactiver toutes les checkboxes de plateforme
+        for cb in self.platform_checkboxes.values():
+            cb.configure(state="disabled")
+        
+        self.title_entry.insert(0, post['title'] or "")
+        self.textbox.insert("1.0", post['text_content'])
+        scheduled_dt = datetime.strptime(post['scheduled_at'], '%Y-%m-%d %H:%M:%S')
+        self.cal.set_date(scheduled_dt.date())
+        self.hour_menu.set(f"{scheduled_dt.hour:02d}")
+        self.minute_menu.set(f"{scheduled_dt.minute:02d}")
+        
+        logging.debug(f"Date/time set: {scheduled_dt}")
+        
+        # Charger l'image existante
+        if post['image_path']:
+            logging.debug(f"Loading existing image: {post['image_path']}")
+            self.drop_label.configure(text=f"🖼️ Image: {post['image_path'].split('/')[-1]}")
+            # Créer un widget ImageEntry pour l'image existante
+            widget = ImageEntry(self.image_labels_frame, post['image_path'], self.delete_image, self.move_image)
+            self.image_widgets.append(widget)
+            self.redraw_image_widgets()
+            logging.debug("Image widget created and redrawn")
+        else:
+            logging.debug("No image to load")
+
+    def save(self):
+        title = self.title_entry.get() or None
+        text = self.textbox.get("1.0", "end-1c").strip()
+        if not text:
+            messagebox.showerror("❌ Erreur", "Le texte ne peut pas être vide.", parent=self)
+            return
+
+        selected_platforms = [var.get() for var in self.platform_vars.values() if var.get() != "off"]
+        if not selected_platforms:
+            messagebox.showerror("❌ Erreur", "Veuillez sélectionner au moins une plateforme.", parent=self)
+            return
+
+        try:
+            date_str = self.cal.get_date().strftime('%Y-%m-%d')
+            hour, minute = int(self.hour_menu.get()), int(self.minute_menu.get())
+            scheduled_at = datetime.strptime(f"{date_str} {hour:02d}:{minute:02d}", '%Y-%m-%d %H:%M')
+            if scheduled_at < datetime.now() and not self.post_id:
+                if not messagebox.askyesno("⚠️ Date dans le passé", "La date est dans le passé. Continuer ?", parent=self):
+                    return
+        except (ValueError, TypeError):
+            messagebox.showerror("❌ Erreur", "Format de date/heure invalide.", parent=self)
+            return
+
+        image_paths = [widget.image_path for widget in self.image_widgets]
+        self.save_button.configure(state="disabled")
+        self.status_label.configure(text="Démarrage...")
+        
+        result = []
+        thread = threading.Thread(target=self._save_worker, args=(title, text, scheduled_at, image_paths, selected_platforms, result))
+        thread.start()
+        self.after(100, self._check_save_thread, thread, result)
+
+    def _save_worker(self, title, text, scheduled_at, image_paths, selected_platforms, result):
+        try:
+            final_image_url = None
+            # Séparer les URLs existantes des nouveaux fichiers locaux
+            local_files = [p for p in image_paths if not p.startswith(('http://', 'https://'))]
+            existing_urls = [p for p in image_paths if p.startswith(('http://', 'https://'))]
+
+            # Si on a de nouveaux fichiers locaux, les traiter
+            if local_files:
+                self.after(0, lambda: self.status_label.configure(text="⏳ Traitement image..."))
+                # Déterminer la plateforme à utiliser pour le traitement d'image
+                # Priorité à Instagram si sélectionné
+                processing_platform = 'instagram' if 'instagram' in selected_platforms else selected_platforms[0]
+                image_data = image_utils.combine_and_resize_images(local_files, platform=processing_platform)
+                if not image_data: raise ValueError("Échec création image.")
+
+                # L'upload ne se fait qu'une fois, en utilisant la config de la première plateforme
+                self.after(0, lambda: self.status_label.configure(text="⏳ Upload FTP..."))
+                upload_platform = selected_platforms[0]
+                final_image_url = image_utils.upload_image_to_ftp(image_data, scheduled_at, upload_platform)
+                if not final_image_url: raise ConnectionError("Échec de l'upload FTP.")
+
+            # Si on a une URL existante et pas de nouveaux fichiers, la conserver
+            elif existing_urls:
+                final_image_url = existing_urls[0]
+
+            # Si on édite et qu'on n'a ni nouveaux fichiers ni URLs (images vidées), garder None
+            elif self.post_id and not self.image_marked_for_deletion:
+                 original_post = database.get_post_by_id(self.post_id)
+                 final_image_url = original_post['image_path']
+
+            self.after(0, lambda: self.status_label.configure(text="📝 Enregistrement..."))
+            if self.post_id:
+                database.update_post(self.post_id, selected_platforms[0], title, text, final_image_url, scheduled_at)
+                scheduler_service.reschedule_post(self.post_id, scheduled_at)
+            else:
+                for platform in selected_platforms:
+                    post_id = database.add_post(platform, title, text, final_image_url, scheduled_at)
+                    scheduler_service.schedule_new_post(post_id, scheduled_at)
+            result.append(True)
+        except Exception as e:
+            logging.error(f"Erreur dans le worker de sauvegarde: {e}")
+            result.append(e)
+
+    def _check_save_thread(self, thread, result):
+        if thread.is_alive():
+            self.after(100, self._check_save_thread, thread, result)
+        else:
+            self.save_button.configure(state="normal")
+            if result and result[0] is True:
+                self.app.status_bar.configure(text="✓ Opération terminée avec succès !")
+                self.app.after(3000, lambda: self.app.status_bar.configure(text="Prêt"))
+                self.app.refresh_all_views()
+                self.destroy()
+            else:
+                error_message = result[0] if result else "Erreur inconnue."
+                messagebox.showerror("❌ Erreur de sauvegarde", f"L'opération a échoué :\n\n{error_message}", parent=self)
+                self.status_label.configure(text="❌ Échec.")
+
+    def handle_drop(self, event):
+        raw_paths = self.winfo_toplevel().tk.splitlist(event.data)
+        valid_files = [p for p in raw_paths if p.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))]
+        if not valid_files: return
+        remaining_slots = 3 - len(self.image_widgets)
+        if len(valid_files) > remaining_slots:
+            valid_files = valid_files[:remaining_slots]
+        for path in valid_files:
+            widget = ImageEntry(self.image_labels_frame, path, self.delete_image, self.move_image)
+            self.image_widgets.append(widget)
+        self.redraw_image_widgets()
+
+    def delete_image(self, widget_to_delete):
+        widget_to_delete.destroy()
+        self.image_widgets.remove(widget_to_delete)
+        self.redraw_image_widgets()
+
+    def move_image(self, widget_to_move, direction):
+        try:
+            idx = self.image_widgets.index(widget_to_move)
+            new_idx = idx + direction
+            if 0 <= new_idx < len(self.image_widgets):
+                self.image_widgets.pop(idx)
+                self.image_widgets.insert(new_idx, widget_to_move)
+                self.redraw_image_widgets()
+        except ValueError: pass
+
+    def redraw_image_widgets(self):
+        for widget in self.image_labels_frame.winfo_children(): widget.pack_forget()
+        for i, widget in enumerate(self.image_widgets):
+            widget.pack(fill="x", pady=2, padx=2)
+            widget.up_button.configure(state="normal" if i > 0 else "disabled")
+            widget.down_button.configure(state="normal" if i < len(self.image_widgets) - 1 else "disabled")
+
+if __name__ == "__main__":
+    database.initialize_db()
+    scheduler_service.start_scheduler()
+    app = App()
+    app.mainloop()
+
+### FIN FICHIER: main_app.pyw ###
+
+--------------------------------------------------------------------------------
+
+### FICHIER: scheduler_service.py ###
+
+# scheduler_service.py
+
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+import database
+
+# --- Import des modules API pour chaque plateforme ---
+import linkedin_api
+import instagram_api
+import facebook_api
+
+# --- Mapping des plateformes aux modules API ---
+API_CLIENTS = {
+    'linkedin': linkedin_api,
+    'instagram': instagram_api,
+    'facebook': facebook_api,
+}
+
+jobstores = {
+    'default': SQLAlchemyJobStore(url=f'sqlite:///{database.DB_NAME}')
+}
+scheduler = BackgroundScheduler(jobstores=jobstores)
+
+def publish_post_task(post_id: int):
+    print(f"Tâche déclenchée : Publication du post ID {post_id}")
+    post = database.get_post_by_id(post_id)
+    
+    if not post:
+        print(f"Erreur : Post ID {post_id} non trouvé.")
+        return
+    if post['status'] != 'scheduled':
+        print(f"Avertissement : Le post ID {post_id} n'est pas à l'état 'scheduled'. Tâche ignorée.")
+        return
+
+    platform = post['platform']
+    api_client = API_CLIENTS.get(platform)
+
+    if not api_client:
+        print(f"Erreur critique : Aucun client API trouvé pour la plateforme '{platform}'.")
+        database.update_post_status(post_id, 'failed', error_message=f"Plateforme '{platform}' non supportée.")
+        return
+
+    try:
+        # Passer le titre, le texte et l'image à la méthode post_update du bon client
+        success, message = api_client.post_update(
+            post['title'], 
+            post['text_content'], 
+            post['image_path']
+        )
+        
+        if success:
+            database.update_post_status(post_id, 'published')
+        else:
+            database.update_post_status(post_id, 'failed', error_message=message)
+            
+    except Exception as e:
+        print(f"Erreur critique lors de la publication du post ID {post_id} sur {platform}: {e}")
+        database.update_post_status(post_id, 'failed', error_message=str(e))
+
+def schedule_new_post(post_id: int, scheduled_at):
+    scheduler.add_job(
+        publish_post_task,
+        'date',
+        run_date=scheduled_at,
+        args=[post_id],
+        id=f'post_{post_id}',
+        replace_existing=True
+    )
+    print(f"Post ID {post_id} programmé pour {scheduled_at}")
+
+def remove_scheduled_post(post_id: int):
+    job_id = f'post_{post_id}'
+    if scheduler.get_job(job_id):
+        scheduler.remove_job(job_id)
+        print(f"Tâche pour le post ID {post_id} supprimée du scheduler.")
+
+def reschedule_post(post_id: int, new_scheduled_at):
+    """Reprogramme un job existant pour une nouvelle date/heure."""
+    job_id = f'post_{post_id}'
+    if scheduler.get_job(job_id):
+        scheduler.reschedule_job(job_id, trigger='date', run_date=new_scheduled_at)
+        print(f"Post ID {post_id} reprogrammé pour {new_scheduled_at}")
+    else:
+        # Si le job n'existe pas (par ex. après un redémarrage où le post est en DB mais pas dans le scheduler)
+        # On le recrée simplement.
+        schedule_new_post(post_id, new_scheduled_at)
+
+def start_scheduler():
+    if not scheduler.running:
+        scheduler.start()
+        print("Scheduler démarré.")
+
+# --- Ajout d'une fonction pour l'envoi manuel ---
+def send_post_now_manual(post_id: int) -> tuple[bool, str]:
+    """
+    Force l'envoi immédiat d'un post.
+    Retourne un tuple (succès, message).
+    """
+    print(f"Envoi manuel forcé pour le post ID {post_id}")
+    post = database.get_post_by_id(post_id)
+    
+    if not post:
+        return False, f"Post ID {post_id} non trouvé."
+
+    platform = post['platform']
+    api_client = API_CLIENTS.get(platform)
+
+    if not api_client:
+        database.update_post_status(post_id, 'failed', error_message=f"Plateforme '{platform}' non supportée.")
+        return False, f"Aucun client API trouvé pour la plateforme '{platform}'."
+
+    try:
+        success, message = api_client.post_update(
+            post['title'], 
+            post['text_content'], 
+            post['image_path']
+        )
+        
+        if success:
+            if post['status'] == 'scheduled':
+                remove_scheduled_post(post_id)
+            database.update_post_status(post_id, 'published')
+        else:
+            database.update_post_status(post_id, 'failed', error_message=message)
+        
+        return success, message
+            
+    except Exception as e:
+        print(f"Erreur critique lors de l'envoi manuel du post ID {post_id} sur {platform}: {e}")
+        database.update_post_status(post_id, 'failed', error_message=str(e))
+        return False, str(e)
+
+
+### FIN FICHIER: scheduler_service.py ###
+
+--------------------------------------------------------------------------------
+
+### FICHIER: test_edit_specific.py ###
+
+#!/usr/bin/env python3
+# test_edit_specific.py
+
+import database
+import logging
+from datetime import datetime
+
+logging.basicConfig(level=logging.DEBUG, 
+                    filename='test_edit.log', 
+                    filemode='w',
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+def test_edit_post(post_id):
+    print(f"=== TEST MODIFICATION POST ID: {post_id} ===")
+    
+    # Récupérer le post
+    post = database.get_post_by_id(post_id)
+    if not post:
+        print(f"[ERREUR] Post {post_id} non trouvé !")
+        return False
+    
+    print(f"[OK] Post trouvé:")
+    print(f"  - ID: {post['id']}")
+    print(f"  - Plateforme: {post['platform']}")
+    print(f"  - Titre: {post['title']}")
+    print(f"  - Texte: {len(post['text_content'])} caractères")
+    print(f"  - Image: {post['image_path']}")
+    print(f"  - Date: {post['scheduled_at']}")
+    
+    # Simuler le chargement des données comme dans load_post_data
+    print("\n=== SIMULATION load_post_data ===")
+    
+    # Vérifier les plateformes
+    PLATFORMS = ["linkedin", "instagram", "facebook"]
+    print(f"Plateformes disponibles: {PLATFORMS}")
+    print(f"Plateforme du post: {post['platform']}")
+    print(f"Plateforme dans la liste: {post['platform'] in PLATFORMS}")
+    
+    # Vérifier la date
+    try:
+        scheduled_dt = datetime.strptime(post['scheduled_at'], '%Y-%m-%d %H:%M:%S')
+        print(f"[OK] Date parsée: {scheduled_dt}")
+        print(f"  - Date: {scheduled_dt.date()}")
+        print(f"  - Heure: {scheduled_dt.hour:02d}:{scheduled_dt.minute:02d}")
+    except Exception as e:
+        print(f"[ERREUR] Impossible de parser la date: {e}")
+        return False
+    
+    print("\n=== TOUT EST OK ===")
+    return True
+
+if __name__ == "__main__":
+    # Tester avec le post 62
+    test_edit_post(62)
+
+### FIN FICHIER: test_edit_specific.py ###
+
+--------------------------------------------------------------------------------
+

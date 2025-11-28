@@ -1,0 +1,292 @@
+
+2025-11-12 18:49:39,145 - INFO - Scheduler started
+2025-11-12 18:49:39,145 - DEBUG - Looking for jobs to run
+2025-11-12 18:49:39,187 - DEBUG - Next wakeup is due at 2025-11-13 09:05:00+01:00 (in 51320.812913 seconds)
+2025-11-12 18:49:46,744 - DEBUG - enter_edit_mode called with post_id: 61
+2025-11-12 18:49:46,744 - DEBUG - open_post_creator called with post_id=61, date=None
+2025-11-12 18:49:46,744 - DEBUG - Creating new PostCreatorWindow
+2025-11-12 18:49:46,890 - DEBUG - load_post_data called for post_id: 61
+2025-11-12 18:49:46,890 - DEBUG - Post data loaded: id=61, platform=linkedin, title=None
+2025-11-12 18:49:46,893 - DEBUG - Platform checkbox linkedin checked
+2025-11-12 18:49:46,897 - DEBUG - Date/time set: 2025-11-20 09:05:00
+2025-11-12 18:49:46,897 - DEBUG - Loading existing image: https://www.gregbellevrat.fr/photos_reseaux/linkedin-ressources/2025-11-20-09-05.jpg
+2025-11-12 18:49:46,908 - DEBUG - Image widget created and redrawn
+2025-11-12 18:49:46,929 - DEBUG - PostCreatorWindow created and grab_set called
+2025-11-12 18:50:19,658 - ERROR - Erreur dans le worker de sauvegarde: [Errno 22] Invalid argument: 'https://www.gregbellevrat.fr/photos_reseaux/linkedin-ressources/2025-11-20-09-05.jpg'
+2025-11-12 18:51:38,529 - DEBUG - Importing AvifImagePlugin
+2025-11-12 18:51:38,530 - DEBUG - Importing BlpImagePlugin
+2025-11-12 18:51:38,530 - DEBUG - Importing BmpImagePlugin
+2025-11-12 18:51:38,530 - DEBUG - Importing BufrStubImagePlugin
+2025-11-12 18:51:38,531 - DEBUG - Importing CurImagePlugin
+2025-11-12 18:51:38,531 - DEBUG - Importing DcxImagePlugin
+2025-11-12 18:51:38,532 - DEBUG - Importing DdsImagePlugin
+2025-11-12 18:51:38,533 - DEBUG - Importing EpsImagePlugin
+2025-11-12 18:51:38,534 - DEBUG - Importing FitsImagePlugin
+2025-11-12 18:51:38,534 - DEBUG - Importing FliImagePlugin
+2025-11-12 18:51:38,535 - DEBUG - Importing FpxImagePlugin
+2025-11-12 18:51:38,535 - DEBUG - Image: failed to import FpxImagePlugin: No module named 'olefile'
+2025-11-12 18:51:38,535 - DEBUG - Importing FtexImagePlugin
+2025-11-12 18:51:38,536 - DEBUG - Importing GbrImagePlugin
+2025-11-12 18:51:38,536 - DEBUG - Importing GifImagePlugin
+2025-11-12 18:51:38,536 - DEBUG - Importing GribStubImagePlugin
+2025-11-12 18:51:38,536 - DEBUG - Importing Hdf5StubImagePlugin
+2025-11-12 18:51:38,537 - DEBUG - Importing IcnsImagePlugin
+2025-11-12 18:51:38,538 - DEBUG - Importing IcoImagePlugin
+2025-11-12 18:51:38,538 - DEBUG - Importing ImImagePlugin
+2025-11-12 18:51:38,539 - DEBUG - Importing ImtImagePlugin
+2025-11-12 18:51:38,539 - DEBUG - Importing IptcImagePlugin
+2025-11-12 18:51:38,540 - DEBUG - Importing JpegImagePlugin
+2025-11-12 18:51:38,540 - DEBUG - Importing Jpeg2KImagePlugin
+2025-11-12 18:51:38,540 - DEBUG - Importing McIdasImagePlugin
+2025-11-12 18:51:38,543 - DEBUG - Importing MicImagePlugin
+2025-11-12 18:51:38,544 - DEBUG - Image: failed to import MicImagePlugin: No module named 'olefile'
+2025-11-12 18:51:38,544 - DEBUG - Importing MpegImagePlugin
+2025-11-12 18:51:38,544 - DEBUG - Importing MpoImagePlugin
+2025-11-12 18:51:38,546 - DEBUG - Importing MspImagePlugin
+2025-11-12 18:51:38,547 - DEBUG - Importing PalmImagePlugin
+2025-11-12 18:51:38,548 - DEBUG - Importing PcdImagePlugin
+2025-11-12 18:51:38,548 - DEBUG - Importing PcxImagePlugin
+2025-11-12 18:51:38,548 - DEBUG - Importing PdfImagePlugin
+2025-11-12 18:51:38,551 - DEBUG - Importing PixarImagePlugin
+2025-11-12 18:51:38,551 - DEBUG - Importing PngImagePlugin
+2025-11-12 18:51:38,551 - DEBUG - Importing PpmImagePlugin
+2025-11-12 18:51:38,551 - DEBUG - Importing PsdImagePlugin
+2025-11-12 18:51:38,551 - DEBUG - Importing QoiImagePlugin
+2025-11-12 18:51:38,552 - DEBUG - Importing SgiImagePlugin
+2025-11-12 18:51:38,552 - DEBUG - Importing SpiderImagePlugin
+2025-11-12 18:51:38,552 - DEBUG - Importing SunImagePlugin
+2025-11-12 18:51:38,552 - DEBUG - Importing TgaImagePlugin
+2025-11-12 18:51:38,553 - DEBUG - Importing TiffImagePlugin
+2025-11-12 18:51:38,553 - DEBUG - Importing WebPImagePlugin
+2025-11-12 18:51:38,554 - DEBUG - Importing WmfImagePlugin
+2025-11-12 18:51:38,554 - DEBUG - Importing XbmImagePlugin
+2025-11-12 18:51:38,555 - DEBUG - Importing XpmImagePlugin
+2025-11-12 18:51:38,555 - DEBUG - Importing XVThumbImagePlugin
+2025-11-12 18:51:41,017 - INFO - Scheduler has been shut down
+2025-11-12 18:51:41,017 - DEBUG - Looking for jobs to run
+2025-11-12 18:51:41,018 - DEBUG - Next wakeup is due at 2025-11-13 09:05:00+01:00 (in 51198.981962 seconds)
+2025-11-12 18:52:41,296 - INFO - Scheduler started
+2025-11-12 18:52:41,296 - DEBUG - Looking for jobs to run
+2025-11-12 18:52:41,336 - DEBUG - Next wakeup is due at 2025-11-13 09:05:00+01:00 (in 51138.663298 seconds)
+2025-11-12 18:52:47,429 - DEBUG - enter_edit_mode called with post_id: 61
+2025-11-12 18:52:47,429 - DEBUG - open_post_creator called with post_id=61, date=None
+2025-11-12 18:52:47,429 - DEBUG - Creating new PostCreatorWindow
+2025-11-12 18:52:47,566 - DEBUG - load_post_data called for post_id: 61
+2025-11-12 18:52:47,567 - DEBUG - Post data loaded: id=61, platform=linkedin, title=None
+2025-11-12 18:52:47,570 - DEBUG - Platform checkbox linkedin checked
+2025-11-12 18:52:47,573 - DEBUG - Date/time set: 2025-11-20 09:05:00
+2025-11-12 18:52:47,573 - DEBUG - Loading existing image: https://www.gregbellevrat.fr/photos_reseaux/linkedin-ressources/2025-11-20-09-05.jpg
+2025-11-12 18:52:47,584 - DEBUG - Image widget created and redrawn
+2025-11-12 18:52:47,605 - DEBUG - PostCreatorWindow created and grab_set called
+2025-11-12 18:52:58,469 - DEBUG - enter_edit_mode called with post_id: 61
+2025-11-12 18:52:58,469 - DEBUG - open_post_creator called with post_id=61, date=None
+2025-11-12 18:52:58,469 - DEBUG - Creating new PostCreatorWindow
+2025-11-12 18:52:58,587 - DEBUG - load_post_data called for post_id: 61
+2025-11-12 18:52:58,588 - DEBUG - Post data loaded: id=61, platform=linkedin, title=None
+2025-11-12 18:52:58,589 - DEBUG - Platform checkbox linkedin checked
+2025-11-12 18:52:58,591 - DEBUG - Date/time set: 2025-11-20 09:05:00
+2025-11-12 18:52:58,591 - DEBUG - Loading existing image: https://www.gregbellevrat.fr/photos_reseaux/linkedin-ressources/2025-11-20-09-05.jpg
+2025-11-12 18:52:58,597 - DEBUG - Image widget created and redrawn
+2025-11-12 18:52:58,614 - DEBUG - PostCreatorWindow created and grab_set called
+2025-11-12 18:53:12,515 - DEBUG - Looking for jobs to run
+2025-11-12 18:53:12,516 - DEBUG - Next wakeup is due at 2025-11-13 09:05:00+01:00 (in 51107.483915 seconds)
+2025-11-12 18:53:23,613 - DEBUG - Importing AvifImagePlugin
+2025-11-12 18:53:23,614 - DEBUG - Importing BlpImagePlugin
+2025-11-12 18:53:23,615 - DEBUG - Importing BmpImagePlugin
+2025-11-12 18:53:23,615 - DEBUG - Importing BufrStubImagePlugin
+2025-11-12 18:53:23,615 - DEBUG - Importing CurImagePlugin
+2025-11-12 18:53:23,616 - DEBUG - Importing DcxImagePlugin
+2025-11-12 18:53:23,616 - DEBUG - Importing DdsImagePlugin
+2025-11-12 18:53:23,618 - DEBUG - Importing EpsImagePlugin
+2025-11-12 18:53:23,618 - DEBUG - Importing FitsImagePlugin
+2025-11-12 18:53:23,619 - DEBUG - Importing FliImagePlugin
+2025-11-12 18:53:23,619 - DEBUG - Importing FpxImagePlugin
+2025-11-12 18:53:23,620 - DEBUG - Image: failed to import FpxImagePlugin: No module named 'olefile'
+2025-11-12 18:53:23,620 - DEBUG - Importing FtexImagePlugin
+2025-11-12 18:53:23,620 - DEBUG - Importing GbrImagePlugin
+2025-11-12 18:53:23,620 - DEBUG - Importing GifImagePlugin
+2025-11-12 18:53:23,620 - DEBUG - Importing GribStubImagePlugin
+2025-11-12 18:53:23,620 - DEBUG - Importing Hdf5StubImagePlugin
+2025-11-12 18:53:23,621 - DEBUG - Importing IcnsImagePlugin
+2025-11-12 18:53:23,621 - DEBUG - Importing IcoImagePlugin
+2025-11-12 18:53:23,622 - DEBUG - Importing ImImagePlugin
+2025-11-12 18:53:23,623 - DEBUG - Importing ImtImagePlugin
+2025-11-12 18:53:23,623 - DEBUG - Importing IptcImagePlugin
+2025-11-12 18:53:23,623 - DEBUG - Importing JpegImagePlugin
+2025-11-12 18:53:23,623 - DEBUG - Importing Jpeg2KImagePlugin
+2025-11-12 18:53:23,623 - DEBUG - Importing McIdasImagePlugin
+2025-11-12 18:53:23,624 - DEBUG - Importing MicImagePlugin
+2025-11-12 18:53:23,624 - DEBUG - Image: failed to import MicImagePlugin: No module named 'olefile'
+2025-11-12 18:53:23,624 - DEBUG - Importing MpegImagePlugin
+2025-11-12 18:53:23,624 - DEBUG - Importing MpoImagePlugin
+2025-11-12 18:53:23,626 - DEBUG - Importing MspImagePlugin
+2025-11-12 18:53:23,626 - DEBUG - Importing PalmImagePlugin
+2025-11-12 18:53:23,627 - DEBUG - Importing PcdImagePlugin
+2025-11-12 18:53:23,627 - DEBUG - Importing PcxImagePlugin
+2025-11-12 18:53:23,627 - DEBUG - Importing PdfImagePlugin
+2025-11-12 18:53:23,630 - DEBUG - Importing PixarImagePlugin
+2025-11-12 18:53:23,630 - DEBUG - Importing PngImagePlugin
+2025-11-12 18:53:23,630 - DEBUG - Importing PpmImagePlugin
+2025-11-12 18:53:23,630 - DEBUG - Importing PsdImagePlugin
+2025-11-12 18:53:23,630 - DEBUG - Importing QoiImagePlugin
+2025-11-12 18:53:23,631 - DEBUG - Importing SgiImagePlugin
+2025-11-12 18:53:23,631 - DEBUG - Importing SpiderImagePlugin
+2025-11-12 18:53:23,631 - DEBUG - Importing SunImagePlugin
+2025-11-12 18:53:23,631 - DEBUG - Importing TgaImagePlugin
+2025-11-12 18:53:23,632 - DEBUG - Importing TiffImagePlugin
+2025-11-12 18:53:23,632 - DEBUG - Importing WebPImagePlugin
+2025-11-12 18:53:23,632 - DEBUG - Importing WmfImagePlugin
+2025-11-12 18:53:23,633 - DEBUG - Importing XbmImagePlugin
+2025-11-12 18:53:23,633 - DEBUG - Importing XpmImagePlugin
+2025-11-12 18:53:23,633 - DEBUG - Importing XVThumbImagePlugin
+2025-11-12 18:53:26,492 - INFO - Scheduler has been shut down
+2025-11-12 18:53:26,492 - DEBUG - Looking for jobs to run
+2025-11-12 18:53:26,493 - DEBUG - Next wakeup is due at 2025-11-13 09:05:00+01:00 (in 51093.506819 seconds)
+2025-11-13 09:37:24,401 - INFO - Scheduler started
+2025-11-13 09:37:24,402 - DEBUG - Looking for jobs to run
+2025-11-13 09:37:24,446 - WARNING - Run time of job "publish_post_task (trigger: date[2025-11-13 09:05:00 CET], next run at: 2025-11-13 09:05:00 CET)" was missed by 0:32:24.446907
+2025-11-13 09:37:24,449 - INFO - Removed job post_59
+2025-11-13 09:37:24,450 - DEBUG - Next wakeup is due at 2025-11-14 09:15:00+01:00 (in 85055.549090 seconds)
+2025-11-13 09:39:28,682 - DEBUG - open_post_creator called with post_id=None, date=None
+2025-11-13 09:39:28,682 - DEBUG - Creating new PostCreatorWindow
+2025-11-13 09:39:28,837 - DEBUG - PostCreatorWindow created and grab_set called
+2025-11-13 09:44:04,732 - DEBUG - open_post_creator called with post_id=None, date=None
+2025-11-13 09:44:04,732 - DEBUG - Creating new PostCreatorWindow
+2025-11-13 09:44:05,155 - DEBUG - PostCreatorWindow created and grab_set called
+2025-11-13 09:49:03,450 - ERROR - Erreur dans le worker de sauvegarde: [Errno 2] No such file or directory: 'F:/PROJET COMMUNICATION - MARKETING/ENTREPRISES/GBP/STOCK PHOTO/New 2020/deals4events/2019-12-05 - PRO - DEAL4EVENT - 00165.jpg'
+2025-11-13 09:51:11,991 - DEBUG - tag: ImageWidth (256) - type: short (3) - value: b'\x80\x16'
+2025-11-13 09:51:11,991 - DEBUG - tag: ImageLength (257) - type: short (3) - value: b'\x00\x0f'
+2025-11-13 09:51:11,991 - DEBUG - tag: BitsPerSample (258) - type: short (3) Tag Location: 46 - Data Location: 194 - value: b'\x08\x00\x08\x00\x08\x00'
+2025-11-13 09:51:11,992 - DEBUG - tag: PhotometricInterpretation (262) - type: short (3) - value: b'\x02\x00'
+2025-11-13 09:51:11,992 - DEBUG - tag: Make (271) - type: string (2) Tag Location: 70 - Data Location: 200 - value: b'Canon\x00'
+2025-11-13 09:51:11,992 - DEBUG - tag: Model (272) - type: string (2) Tag Location: 82 - Data Location: 206 - value: b'Canon EOS 5D Mark III\x00'
+2025-11-13 09:51:11,992 - DEBUG - tag: Orientation (274) - type: short (3) - value: b'\x01\x00'
+2025-11-13 09:51:11,992 - DEBUG - tag: SamplesPerPixel (277) - type: short (3) - value: b'\x03\x00'
+2025-11-13 09:51:11,992 - DEBUG - tag: XResolution (282) - type: rational (5) Tag Location: 118 - Data Location: 228 - value: b"\x00\x9f$\x00\x10'\x00\x00"
+2025-11-13 09:51:11,992 - DEBUG - tag: YResolution (283) - type: rational (5) Tag Location: 130 - Data Location: 236 - value: b"\x00\x9f$\x00\x10'\x00\x00"
+2025-11-13 09:51:11,992 - DEBUG - tag: ResolutionUnit (296) - type: short (3) - value: b'\x02\x00'
+2025-11-13 09:51:11,992 - DEBUG - tag: Software (305) - type: string (2) Tag Location: 154 - Data Location: 244 - value: <table: 34 bytes>
+2025-11-13 09:51:11,992 - DEBUG - tag: DateTime (306) - type: string (2) Tag Location: 166 - Data Location: 278 - value: b'2019:12:05 16:41:43\x00'
+2025-11-13 09:51:11,992 - DEBUG - tag: Copyright (33432) - type: string (2) Tag Location: 178 - Data Location: 298 - value: b'Greg BELLEVRAT Photographie\x00'
+2025-11-13 09:51:11,992 - DEBUG - tag: ExifIFD (34665) - type: long (4) - value: b'H\x01\x00\x00'
+2025-11-13 09:51:12,750 - INFO - Added job "publish_post_task" to job store "default"
+2025-11-13 09:51:12,750 - DEBUG - Looking for jobs to run
+2025-11-13 09:51:12,751 - DEBUG - Next wakeup is due at 2025-11-14 09:15:00+01:00 (in 84227.248122 seconds)
+2025-11-13 09:51:12,754 - INFO - Added job "publish_post_task" to job store "default"
+2025-11-13 09:51:12,755 - DEBUG - Looking for jobs to run
+2025-11-13 09:51:12,755 - DEBUG - Next wakeup is due at 2025-11-14 09:15:00+01:00 (in 84227.244119 seconds)
+2025-11-13 09:51:43,930 - DEBUG - enter_edit_mode called with post_id: 63
+2025-11-13 09:51:43,930 - DEBUG - open_post_creator called with post_id=63, date=None
+2025-11-13 09:51:43,930 - DEBUG - Creating new PostCreatorWindow
+2025-11-13 09:51:44,043 - DEBUG - load_post_data called for post_id: 63
+2025-11-13 09:51:44,044 - DEBUG - Post data loaded: id=63, platform=linkedin, title=None
+2025-11-13 09:51:44,045 - DEBUG - Platform checkbox linkedin checked
+2025-11-13 09:51:44,047 - DEBUG - Date/time set: 2025-11-18 09:15:00
+2025-11-13 09:51:44,047 - DEBUG - Loading existing image: https://www.gregbellevrat.fr/photos_reseaux/linkedin-ressources/2025-11-18-09-15.jpg
+2025-11-13 09:51:44,053 - DEBUG - Image widget created and redrawn
+2025-11-13 09:51:44,070 - DEBUG - PostCreatorWindow created and grab_set called
+2025-11-13 09:52:20,878 - DEBUG - enter_edit_mode called with post_id: 63
+2025-11-13 09:52:20,878 - DEBUG - open_post_creator called with post_id=63, date=None
+2025-11-13 09:52:20,878 - DEBUG - Creating new PostCreatorWindow
+2025-11-13 09:52:20,997 - DEBUG - load_post_data called for post_id: 63
+2025-11-13 09:52:20,997 - DEBUG - Post data loaded: id=63, platform=linkedin, title=None
+2025-11-13 09:52:20,999 - DEBUG - Platform checkbox linkedin checked
+2025-11-13 09:52:21,001 - DEBUG - Date/time set: 2025-11-18 09:15:00
+2025-11-13 09:52:21,002 - DEBUG - Loading existing image: https://www.gregbellevrat.fr/photos_reseaux/linkedin-ressources/2025-11-18-09-15.jpg
+2025-11-13 09:52:21,007 - DEBUG - Image widget created and redrawn
+2025-11-13 09:52:21,025 - DEBUG - PostCreatorWindow created and grab_set called
+2025-11-13 09:52:30,400 - INFO - Removed job post_63
+2025-11-13 09:52:46,412 - INFO - Removed job post_64
+2025-11-13 09:52:52,010 - DEBUG - open_post_creator called with post_id=None, date=None
+2025-11-13 09:52:52,010 - DEBUG - Creating new PostCreatorWindow
+2025-11-13 09:52:52,130 - DEBUG - PostCreatorWindow created and grab_set called
+2025-11-13 09:53:35,994 - DEBUG - tag: ImageWidth (256) - type: short (3) - value: b'\x80\x16'
+2025-11-13 09:53:35,994 - DEBUG - tag: ImageLength (257) - type: short (3) - value: b'\x00\x0f'
+2025-11-13 09:53:35,994 - DEBUG - tag: BitsPerSample (258) - type: short (3) Tag Location: 46 - Data Location: 194 - value: b'\x08\x00\x08\x00\x08\x00'
+2025-11-13 09:53:35,994 - DEBUG - tag: PhotometricInterpretation (262) - type: short (3) - value: b'\x02\x00'
+2025-11-13 09:53:35,994 - DEBUG - tag: Make (271) - type: string (2) Tag Location: 70 - Data Location: 200 - value: b'Canon\x00'
+2025-11-13 09:53:35,994 - DEBUG - tag: Model (272) - type: string (2) Tag Location: 82 - Data Location: 206 - value: b'Canon EOS 5D Mark III\x00'
+2025-11-13 09:53:35,994 - DEBUG - tag: Orientation (274) - type: short (3) - value: b'\x01\x00'
+2025-11-13 09:53:35,994 - DEBUG - tag: SamplesPerPixel (277) - type: short (3) - value: b'\x03\x00'
+2025-11-13 09:53:35,994 - DEBUG - tag: XResolution (282) - type: rational (5) Tag Location: 118 - Data Location: 228 - value: b"\x00\x9f$\x00\x10'\x00\x00"
+2025-11-13 09:53:35,994 - DEBUG - tag: YResolution (283) - type: rational (5) Tag Location: 130 - Data Location: 236 - value: b"\x00\x9f$\x00\x10'\x00\x00"
+2025-11-13 09:53:35,994 - DEBUG - tag: ResolutionUnit (296) - type: short (3) - value: b'\x02\x00'
+2025-11-13 09:53:35,994 - DEBUG - tag: Software (305) - type: string (2) Tag Location: 154 - Data Location: 244 - value: <table: 34 bytes>
+2025-11-13 09:53:35,994 - DEBUG - tag: DateTime (306) - type: string (2) Tag Location: 166 - Data Location: 278 - value: b'2019:12:05 16:41:43\x00'
+2025-11-13 09:53:35,994 - DEBUG - tag: Copyright (33432) - type: string (2) Tag Location: 178 - Data Location: 298 - value: b'Greg BELLEVRAT Photographie\x00'
+2025-11-13 09:53:35,994 - DEBUG - tag: ExifIFD (34665) - type: long (4) - value: b'H\x01\x00\x00'
+2025-11-13 09:53:36,768 - INFO - Added job "publish_post_task" to job store "default"
+2025-11-13 09:53:36,768 - DEBUG - Looking for jobs to run
+2025-11-13 09:53:36,769 - DEBUG - Next wakeup is due at 2025-11-14 09:15:00+01:00 (in 84083.230732 seconds)
+2025-11-13 09:53:36,773 - INFO - Added job "publish_post_task" to job store "default"
+2025-11-13 09:53:36,773 - DEBUG - Looking for jobs to run
+2025-11-13 09:53:36,773 - DEBUG - Next wakeup is due at 2025-11-14 09:15:00+01:00 (in 84083.226732 seconds)
+2025-11-13 09:59:29,789 - DEBUG - open_post_creator called with post_id=None, date=None
+2025-11-13 09:59:29,789 - DEBUG - Creating new PostCreatorWindow
+2025-11-13 09:59:30,294 - DEBUG - PostCreatorWindow created and grab_set called
+2025-11-13 09:59:58,597 - DEBUG - tag: Make (271) - type: string (2) Tag Location: 22 - Data Location: 146 - value: b'Canon\x00'
+2025-11-13 09:59:58,597 - DEBUG - tag: Model (272) - type: string (2) Tag Location: 34 - Data Location: 152 - value: b'Canon EOS 6D\x00'
+2025-11-13 09:59:58,597 - DEBUG - tag: Orientation (274) - type: short (3) - value: b'\x01\x00'
+2025-11-13 09:59:58,597 - DEBUG - tag: XResolution (282) - type: rational (5) Tag Location: 58 - Data Location: 165 - value: b"\x00\x9f$\x00\x10'\x00\x00"
+2025-11-13 09:59:58,597 - DEBUG - tag: YResolution (283) - type: rational (5) Tag Location: 70 - Data Location: 173 - value: b"\x00\x9f$\x00\x10'\x00\x00"
+2025-11-13 09:59:58,597 - DEBUG - tag: ResolutionUnit (296) - type: short (3) - value: b'\x02\x00'
+2025-11-13 09:59:58,598 - DEBUG - tag: Software (305) - type: string (2) Tag Location: 94 - Data Location: 181 - value: b'Adobe Photoshop CC (Windows)\x00'
+2025-11-13 09:59:58,598 - DEBUG - tag: DateTime (306) - type: string (2) Tag Location: 106 - Data Location: 210 - value: b'2018:04:26 09:47:03\x00'
+2025-11-13 09:59:58,598 - DEBUG - tag: Artist (315) - type: string (2) Tag Location: 118 - Data Location: 230 - value: b'GREG BELLEVRAT PHOTOGRAPHIE\x00'
+2025-11-13 09:59:58,598 - DEBUG - tag: Copyright (33432) - type: string (2) Tag Location: 130 - Data Location: 258 - value: b'GREG BELLEVRAT PHOTOGRAPHIE\x00'
+2025-11-13 09:59:58,598 - DEBUG - tag: ExifIFD (34665) - type: long (4) - value: b' \x01\x00\x00'
+2025-11-13 09:59:59,204 - INFO - Added job "publish_post_task" to job store "default"
+2025-11-13 09:59:59,205 - DEBUG - Looking for jobs to run
+2025-11-13 09:59:59,205 - DEBUG - Next wakeup is due at 2025-11-14 09:15:00+01:00 (in 83700.794238 seconds)
+2025-11-13 09:59:59,209 - INFO - Added job "publish_post_task" to job store "default"
+2025-11-13 09:59:59,209 - DEBUG - Looking for jobs to run
+2025-11-13 09:59:59,210 - DEBUG - Next wakeup is due at 2025-11-14 09:15:00+01:00 (in 83700.790240 seconds)
+2025-11-13 10:00:19,311 - DEBUG - Importing AvifImagePlugin
+2025-11-13 10:00:19,323 - DEBUG - Importing BlpImagePlugin
+2025-11-13 10:00:19,326 - DEBUG - Importing BmpImagePlugin
+2025-11-13 10:00:19,326 - DEBUG - Importing BufrStubImagePlugin
+2025-11-13 10:00:19,329 - DEBUG - Importing CurImagePlugin
+2025-11-13 10:00:19,331 - DEBUG - Importing DcxImagePlugin
+2025-11-13 10:00:19,334 - DEBUG - Importing DdsImagePlugin
+2025-11-13 10:00:19,338 - DEBUG - Importing EpsImagePlugin
+2025-11-13 10:00:19,340 - DEBUG - Importing FitsImagePlugin
+2025-11-13 10:00:19,343 - DEBUG - Importing FliImagePlugin
+2025-11-13 10:00:19,344 - DEBUG - Importing FpxImagePlugin
+2025-11-13 10:00:19,346 - DEBUG - Image: failed to import FpxImagePlugin: No module named 'olefile'
+2025-11-13 10:00:19,346 - DEBUG - Importing FtexImagePlugin
+2025-11-13 10:00:19,348 - DEBUG - Importing GbrImagePlugin
+2025-11-13 10:00:19,350 - DEBUG - Importing GifImagePlugin
+2025-11-13 10:00:19,350 - DEBUG - Importing GribStubImagePlugin
+2025-11-13 10:00:19,351 - DEBUG - Importing Hdf5StubImagePlugin
+2025-11-13 10:00:19,353 - DEBUG - Importing IcnsImagePlugin
+2025-11-13 10:00:19,359 - DEBUG - Importing IcoImagePlugin
+2025-11-13 10:00:19,362 - DEBUG - Importing ImImagePlugin
+2025-11-13 10:00:19,363 - DEBUG - Importing ImtImagePlugin
+2025-11-13 10:00:19,365 - DEBUG - Importing IptcImagePlugin
+2025-11-13 10:00:19,367 - DEBUG - Importing JpegImagePlugin
+2025-11-13 10:00:19,367 - DEBUG - Importing Jpeg2KImagePlugin
+2025-11-13 10:00:19,367 - DEBUG - Importing McIdasImagePlugin
+2025-11-13 10:00:19,368 - DEBUG - Importing MicImagePlugin
+2025-11-13 10:00:19,371 - DEBUG - Image: failed to import MicImagePlugin: No module named 'olefile'
+2025-11-13 10:00:19,371 - DEBUG - Importing MpegImagePlugin
+2025-11-13 10:00:19,372 - DEBUG - Importing MpoImagePlugin
+2025-11-13 10:00:19,374 - DEBUG - Importing MspImagePlugin
+2025-11-13 10:00:19,375 - DEBUG - Importing PalmImagePlugin
+2025-11-13 10:00:19,377 - DEBUG - Importing PcdImagePlugin
+2025-11-13 10:00:19,378 - DEBUG - Importing PcxImagePlugin
+2025-11-13 10:00:19,378 - DEBUG - Importing PdfImagePlugin
+2025-11-13 10:00:19,384 - DEBUG - Importing PixarImagePlugin
+2025-11-13 10:00:19,386 - DEBUG - Importing PngImagePlugin
+2025-11-13 10:00:19,386 - DEBUG - Importing PpmImagePlugin
+2025-11-13 10:00:19,386 - DEBUG - Importing PsdImagePlugin
+2025-11-13 10:00:19,388 - DEBUG - Importing QoiImagePlugin
+2025-11-13 10:00:19,390 - DEBUG - Importing SgiImagePlugin
+2025-11-13 10:00:19,392 - DEBUG - Importing SpiderImagePlugin
+2025-11-13 10:00:19,394 - DEBUG - Importing SunImagePlugin
+2025-11-13 10:00:19,395 - DEBUG - Importing TgaImagePlugin
+2025-11-13 10:00:19,397 - DEBUG - Importing TiffImagePlugin
+2025-11-13 10:00:19,397 - DEBUG - Importing WebPImagePlugin
+2025-11-13 10:00:19,405 - DEBUG - Importing WmfImagePlugin
+2025-11-13 10:00:19,407 - DEBUG - Importing XbmImagePlugin
+2025-11-13 10:00:19,409 - DEBUG - Importing XpmImagePlugin
+2025-11-13 10:00:19,411 - DEBUG - Importing XVThumbImagePlugin
