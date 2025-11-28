@@ -28,14 +28,14 @@ export default function Register() {
         setLoading(true);
 
         try {
-            await api.post('/register', { email, password });
+            await api.post('/auth/register', { email, password });
 
             // Connexion automatique après inscription
             const formData = new URLSearchParams();
             formData.append('username', email);
             formData.append('password', password);
 
-            const response = await api.post('/login', formData, {
+            const response = await api.post('/auth/login', formData, {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },

@@ -30,6 +30,8 @@ from fastapi.middleware.cors import CORSMiddleware
 origins = [
     "http://localhost:3000",  # Pour le développement local React
     "http://localhost:5173",  # Pour le développement local Vite
+    "https://www.storage-gbphotos.ovh",  # Domaine OVH réel
+    "https://storage-gbphotos.ovh",
     "https://www.gregbellevrat.fr", # Votre domaine OVH (Exemple)
     "https://gregbellevrat.fr",
     # Ajoutez ici l'URL exacte de votre site OVH une fois déployé
