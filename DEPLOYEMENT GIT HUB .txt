@@ -1,0 +1,44 @@
+Guide GitHub : Déploiement & Gestion Multi-Comptes
+Ce guide vous aide à envoyer votre code sur GitHub et à gérer le problème fréquent des "mauvais comptes" sur Windows.
+
+1. Envoyer son code (La procédure standard)
+Si c'est la première fois pour ce projet :
+
+# 1. Initialiser
+git init
+# 2. Configurer votre identité (si pas fait)
+git config --global user.email "votre-email@gmail.com"
+git config --global user.name "Votre Prénom"
+# 3. Préparer les fichiers
+git add .
+git commit -m "Première version"
+git branch -M main
+# 4. Lier au dépôt distant (remplacez l'URL par la vôtre)
+git remote add origin https://github.com/VOTRE_PSEUDO/NOM_DU_PROJET.git
+# 5. Envoyer
+git push -u origin main
+Pour les fois suivantes (mises à jour) :
+
+git add .
+git commit -m "Description des changements"
+git push
+2. Gérer plusieurs comptes GitHub (Le problème "Permission Denied")
+Si vous avez deux comptes (ex: gregbellevrat-bot et gregbellevratv2-git), Windows va souvent se tromper et utiliser le dernier compte enregistré, ce qui bloque l'accès (Error 403).
+
+La Solution Rapide : "Forcer la déconnexion"
+Avant de faire votre git push, si vous pensez être sur le mauvais compte :
+
+Supprimez l'identifiant enregistré avec cette commande magique :
+
+cmdkey /delete:git:https://github.com
+Lancez votre envoi :
+
+git push
+Reconnectez-vous : Windows va voir qu'il ne vous connait plus et va ouvrir une fenêtre de connexion.
+
+ATTENTION : Regardez bien en haut à droite de la fenêtre GitHub qui s'ouvre. Si vous êtes déjà connecté sur le navigateur avec le mauvais compte, il va le reprendre !
+Astuce : Déconnectez-vous de GitHub dans votre navigateur AVANT de lancer la commande, ou utilisez une fenêtre de "Navigation Privée" si l'option est proposée.
+Résumé pour changer de compte
+cmdkey /delete:git:https://github.com
+git push
+Se connecter avec le BON compte dans la fenêtre qui s'ouvre.
