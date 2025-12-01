@@ -197,15 +197,16 @@ export default function Dashboard() {
                                                 <Send size={16} />
                                                 Envoyer
                                             </button>
-                                            <button
-                                                onClick={() => handleDelete(post.id)}
-                                                className="flex items-center gap-1 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition text-sm"
-                                            >
-                                                <Trash2 size={16} />
-                                                Supprimer
-                                            </button>
                                         </>
                                     )}
+                                    {/* Bouton Supprimer disponible pour tous les posts */}
+                                    <button
+                                        onClick={() => handleDelete(post.id)}
+                                        className="flex items-center gap-1 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition text-sm"
+                                    >
+                                        <Trash2 size={16} />
+                                        Supprimer
+                                    </button>
                                 </div>
                             </div>
                         ))}

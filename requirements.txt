@@ -11,7 +11,4 @@ apscheduler
 python-multipart
 requests
 Pillow
-apscheduler
-python-multipart
-requests
-pillow
+schedule

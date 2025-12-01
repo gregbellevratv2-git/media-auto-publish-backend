@@ -133,5 +133,41 @@ def send_now(
         
     return {"status": "published", "message": message}
 
-# Helper import needed inside the function if not at top
+@router.post("/check-pending-posts")
+def check_pending_posts(
+    session: Session = Depends(get_session)
+):
+    """
+    Vérifie et publie tous les posts programmés dont la date est dépassée.
+    Utilisé pour rattraper les publications manquées pendant le sommeil du serveur.
+    """
+    now = datetime.now()
+    
+    # Trouver tous les posts programmés dont la date est passée
+    query = select(Post).where(
+        Post.status == 'scheduled',
+        Post.scheduled_at <= now
+    )
+    pending_posts = session.exec(query).all()
+    
+    published_count = 0
+    failed_count = 0
+    results = []
+    
+    for post in pending_posts:
+        success, message = send_post_now_manual(post.id, session)
+        if success:
+            published_count += 1
+            results.append(f"✓ Post #{post.id} publié")
+        else:
+            failed_count += 1
+            results.append(f"✗ Post #{post.id} échec: {message}")
+    
+    return {
+        "checked_at": now.isoformat(),
+        "total_pending": len(pending_posts),
+        "published": published_count,
+        "failed": failed_count,
+        "details": results
+    }
 
