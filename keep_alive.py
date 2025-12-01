@@ -22,7 +22,7 @@ from datetime import datetime, time as dt_time
 import schedule
 
 # ========== CONFIGURATION ==========
-SERVER_URL = "https://votre-app.onrender.com"  # ← MODIFIEZ AVEC VOTRE URL RENDER
+SERVER_URL = "https://media-auto-publish-backend.onrender.com"  # ← MODIFIEZ AVEC VOTRE URL RENDER
 INTERVAL_MINUTES = 5  # Intervalle entre chaque vérification
 
 # Tranches horaires actives (format 24h)

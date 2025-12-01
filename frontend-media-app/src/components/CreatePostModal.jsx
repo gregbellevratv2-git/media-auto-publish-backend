@@ -51,11 +51,20 @@ export default function CreatePostModal({ onClose, onPostCreated, initialData = 
             }
 
             // 2. Create or Update Post
+            // Formater la date en conservant le fuseau horaire local (évite le décalage UTC)
+            const year = scheduledDate.getFullYear();
+            const month = String(scheduledDate.getMonth() + 1).padStart(2, '0');
+            const day = String(scheduledDate.getDate()).padStart(2, '0');
+            const hours = String(scheduledDate.getHours()).padStart(2, '0');
+            const minutes = String(scheduledDate.getMinutes()).padStart(2, '0');
+            const seconds = String(scheduledDate.getSeconds()).padStart(2, '0');
+            const localDateTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+
             const postData = {
                 title,
                 text_content: content,
                 platform,
-                scheduled_at: scheduledDate.toISOString(),
+                scheduled_at: localDateTime,
                 image_url: imageUrl,
             };
 
