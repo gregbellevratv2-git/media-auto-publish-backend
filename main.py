@@ -32,12 +32,10 @@ from fastapi.middleware.cors import CORSMiddleware
 origins = [
     "http://localhost:3000",  # Pour le développement local React
     "http://localhost:5173",  # Pour le développement local Vite
-    "https://www.storage-gbphotos.ovh",  # Domaine OVH réel
-    "https://storage-gbphotos.ovh",
-    "https://www.gregbellevrat.fr", # Votre domaine OVH (Exemple)
+    "https://www.storage-gbphotos.ovh",  # Domaine OVH frontend
+    "https://storage-gbphotos.ovh",  # Domaine OVH sans www
+    "https://www.gregbellevrat.fr",  # Autre domaine
     "https://gregbellevrat.fr",
-    # Ajoutez ici l'URL exacte de votre site OVH une fois déployé
-    "*" # A REMPLACER par les domaines spécifiques en production pour la sécurité
 ]
 
 app.add_middleware(
@@ -46,6 +44,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 app.include_router(auth.router)
