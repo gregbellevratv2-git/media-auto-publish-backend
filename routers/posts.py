@@ -140,8 +140,9 @@ def check_pending_posts(
     """
     Vérifie et publie tous les posts programmés dont la date est dépassée.
     Utilisé pour rattraper les publications manquées pendant le sommeil du serveur.
+    IMPORTANT: Utilise UTC pour la cohérence avec les datetimes stockés en base.
     """
-    now = datetime.now()
+    now = datetime.utcnow()
     
     # Trouver tous les posts programmés dont la date est passée
     query = select(Post).where(
