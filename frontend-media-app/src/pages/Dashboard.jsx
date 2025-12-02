@@ -167,7 +167,7 @@ export default function Dashboard() {
                                 <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
                                     <div className="flex items-center gap-1">
                                         <Clock size={16} />
-                                        <span>{new Date(post.scheduled_at).toLocaleString('fr-FR')}</span>
+                                        <span>{new Date(post.scheduled_at.endsWith('Z') ? post.scheduled_at : post.scheduled_at + 'Z').toLocaleString('fr-FR')}</span>
                                     </div>
                                     {post.image_url && (
                                         <div className="flex items-center gap-1">

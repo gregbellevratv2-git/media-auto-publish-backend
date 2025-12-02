@@ -77,9 +77,10 @@ export default function CalendarView({ posts }) {
             {/* Calendar Grid */}
             <div className="grid grid-cols-7 auto-rows-fr">
                 {days.map((day, dayIdx) => {
-                    const dayPosts = posts.filter(post =>
-                        isSameDay(new Date(post.scheduled_at), day)
-                    );
+                    const dayPosts = posts.filter(post => {
+                        const dateStr = post.scheduled_at.endsWith('Z') ? post.scheduled_at : post.scheduled_at + 'Z';
+                        return isSameDay(new Date(dateStr), day);
+                    });
 
                     return (
                         <div
@@ -104,11 +105,11 @@ export default function CalendarView({ posts }) {
                                     <div
                                         key={post.id}
                                         className={`text-xs p-1.5 rounded border mb-1 truncate cursor-pointer hover:opacity-80 transition ${getStatusColor(post.status)}`}
-                                        title={`${post.title || 'Sans titre'} - ${format(new Date(post.scheduled_at), 'HH:mm')}`}
+                                        title={`${post.title || 'Sans titre'} - ${format(new Date(post.scheduled_at.endsWith('Z') ? post.scheduled_at : post.scheduled_at + 'Z'), 'HH:mm')}`}
                                     >
                                         <div className="flex items-center gap-1">
                                             <span>{getPlatformIcon(post.platform)}</span>
-                                            <span className="font-medium">{format(new Date(post.scheduled_at), 'HH:mm')}</span>
+                                            <span className="font-medium">{format(new Date(post.scheduled_at.endsWith('Z') ? post.scheduled_at : post.scheduled_at + 'Z'), 'HH:mm')}</span>
                                         </div>
                                         <div className="truncate mt-0.5">
                                             {post.title || post.text_content}

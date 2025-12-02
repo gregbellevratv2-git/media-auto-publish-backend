@@ -48,6 +48,8 @@ def publish_post_task(post_id: int):
             return
 
         try:
+            print(f"DEBUG SCHEDULER: Publication Post ID {post_id} sur {platform}. Image URL: {post.image_url}")
+            
             # Passer le titre, le texte et l'image à la méthode post_update du bon client
             success, message = api_client.post_update(
                 post.title, 

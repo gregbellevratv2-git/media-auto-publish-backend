@@ -41,12 +41,20 @@ class WebhookAPI:
             "text": full_text,
             "image_url": image_url 
         }
+        
+        # LOGGING DEBUG
+        print(f"DEBUG PAYLOAD ({self.platform}): {payload}")
 
         if not self.webhook_url:
              return False, f"URL Webhook non configurée pour {self.platform}"
 
         try:
             response = requests.post(self.webhook_url, json=payload, timeout=15)
+            
+            # LOGGING RESPONSE
+            print(f"DEBUG RESPONSE STATUS: {response.status_code}")
+            print(f"DEBUG RESPONSE BODY: {response.text}")
+
             # Make.com retourne souvent "Accepted" ou juste 200 OK
             if response.status_code >= 200 and response.status_code < 300:
                 message = f"Webhook pour {self.platform.capitalize()} reçu avec succès par Make.com."

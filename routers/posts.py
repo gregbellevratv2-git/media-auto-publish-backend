@@ -151,6 +151,9 @@ def check_pending_posts(
     )
     pending_posts = session.exec(query).all()
     
+    print(f"DEBUG CHECK_PENDING: {len(pending_posts)} posts trouvés pour rattrapage (Now UTC: {now})")
+
+    
     published_count = 0
     failed_count = 0
     results = []
