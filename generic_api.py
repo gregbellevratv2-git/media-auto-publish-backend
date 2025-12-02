@@ -57,7 +57,10 @@ class WebhookAPI:
 
             # Make.com retourne souvent "Accepted" ou juste 200 OK
             if response.status_code >= 200 and response.status_code < 300:
-                message = f"Webhook pour {self.platform.capitalize()} reçu avec succès par Make.com."
+                # On ajoute le payload au message pour le debug client
+                import json
+                payload_str = json.dumps(payload, default=str)
+                message = f"Webhook reçu. Payload envoyé: {payload_str}"
                 print(f">>> SUCCÈS : {message}")
                 return True, message
             else:

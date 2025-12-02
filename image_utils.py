@@ -56,17 +56,25 @@ def combine_and_resize_images(image_paths: list[str], platform: str) -> io.Bytes
         combined_image.paste(img, (0, current_y))
         current_y += img.height + SPACE_BETWEEN_IMAGES
 
-    # --- Redimensionnement final à la hauteur désirée ---
-    final_aspect_ratio = combined_image.width / combined_image.height
-    final_width = int(FINAL_IMAGE_HEIGHT * final_aspect_ratio)
-    final_image = combined_image.resize((final_width, FINAL_IMAGE_HEIGHT), Image.LANCZOS)
-
-    # --- Redimensionnement spécifique à Instagram ---
-    if platform == 'instagram' and final_image.width > 1400:
-        print(f"Image pour Instagram trop large ({final_image.width}px). Redimensionnement à 1400px de large.")
-        insta_aspect_ratio = final_image.height / final_image.width
-        new_height = int(1400 * insta_aspect_ratio)
-        final_image = final_image.resize((1400, new_height), Image.LANCZOS)
+    # --- Redimensionnement final (Max 1280px sur le plus grand côté) ---
+    max_dimension = 1280
+    width, height = combined_image.size
+    
+    if width > max_dimension or height > max_dimension:
+        if width > height:
+            # Paysage : on fixe la largeur à 1280
+            new_width = max_dimension
+            new_height = int(height * (max_dimension / width))
+        else:
+            # Portrait ou Carré : on fixe la hauteur à 1280
+            new_height = max_dimension
+            new_width = int(width * (max_dimension / height))
+            
+        final_image = combined_image.resize((new_width, new_height), Image.LANCZOS)
+        print(f"Image redimensionnée à {new_width}x{new_height} (Max 1280px)")
+    else:
+        final_image = combined_image
+        print(f"Image conservée à {width}x{height} (<= 1280px)")
 
     # --- Sauvegarde en mémoire ---
     output = io.BytesIO()

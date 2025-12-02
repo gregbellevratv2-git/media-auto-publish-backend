@@ -162,7 +162,7 @@ def check_pending_posts(
         success, message = send_post_now_manual(post.id, session)
         if success:
             published_count += 1
-            results.append(f"✓ Post #{post.id} publié")
+            results.append(f"✓ Post #{post.id} publié. {message}")
         else:
             failed_count += 1
             results.append(f"✗ Post #{post.id} échec: {message}")
