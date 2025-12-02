@@ -147,7 +147,7 @@ export default function CreatePostModal({ onClose, onPostCreated, initialData = 
                                     onChange={(date) => setScheduledDate(date)}
                                     showTimeSelect
                                     timeFormat="HH:mm"
-                                    timeIntervals={15}
+                                    timeIntervals={1}
                                     dateFormat="dd/MM/yyyy HH:mm"
                                     locale={fr}
                                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
